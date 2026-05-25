@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estructura_AGRU_PRUEBA_v3 — Arquitectura DWH · Documentación técnica</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter','ui-sans-serif','system-ui','sans-serif'],
+          mono: ['JetBrains Mono','Cascadia Code','Consolas','monospace'],
+        },
+        colors: {
+          // Alineado a tema Power BI "Azul corporativo #0074BD" (Agrucapers)
+          brand: { 50:'#E6F3FB', 100:'#B9DCF5', 200:'#92C8F0', 300:'#6BB4E8', 400:'#3D9CD9', 500:'#0074BD', 600:'#004F84', 700:'#0A2540' },
+          accent: { 500:'#E39828', 600:'#B8761D' },
+          danger: { 500:'#C30000' },
+        },
+        boxShadow: {
+          soft: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)',
+          card: '0 4px 14px rgba(15,23,42,0.06)',
+        }
+      }
+    }
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .prose-table table { width:100%; border-collapse: collapse; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); font-size: 13.5px; }
+  .prose-table th, .prose-table td { padding: 10px 14px; text-align:left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  .prose-table th { background:#E6F3FB; color:#004F84; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.4px; }
+  .prose-table tr:last-child td { border-bottom: none; }
+  .prose-table tr:hover { background:#f8fafc; }
+  .code-block { background:#0f172a; color:#f1f5f9; padding:16px 20px; border-radius:8px; overflow-x:auto; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.55; }
+  .code-block .k { color:#93c5fd; } .code-block .s { color:#fbbf24; } .code-block .c { color:#94a3b8; font-style:italic; } .code-block .f { color:#f0abfc; }
+  .inline-code { font-family:'JetBrains Mono', monospace; background:#f1f5f9; color:#be185d; padding:1px 6px; border-radius:4px; font-size:12.5px; }
+  .nav-link.active { background: rgba(255,255,255,0.10); border-left-color: white; color:white !important; font-weight:600; }
+  .tab-btn.active { color:#004F84; border-bottom-color:#0074BD; }
+  .accordion-item.open .accordion-arrow { transform: rotate(90deg); }
+  .accordion-item.open .accordion-content { max-height: 6000px; padding: 0 20px 20px; }
+  .mermaid { background:white; padding:18px; border-radius:10px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  @media print { aside, #progress-bar { display:none !important; } main { margin-left:0 !important; } section { page-break-after: always; } }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<!-- Progress bar -->
+<div id="progress-bar" class="fixed top-0 left-0 lg:left-72 right-0 h-1 bg-slate-200 z-50">
+  <div id="progress-fill" class="h-full bg-accent-500 w-0 transition-[width] duration-100"></div>
+</div>
+
+<!-- Mobile sidebar toggle -->
+<button id="sidebar-toggle" class="lg:hidden fixed top-3 right-3 z-50 bg-brand-600 text-white p-2 rounded-md shadow-card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+</button>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="hidden lg:flex lg:flex-col w-72 bg-brand-600 text-white fixed lg:sticky top-0 h-screen overflow-y-auto z-40 inset-0 lg:inset-auto">
+    <div class="px-6 pt-6 pb-4 border-b border-white/10">
+      <div class="bg-white rounded-lg p-3 mb-3 shadow-card flex items-center justify-center">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSJDYXBhXzIiIGRhdGEtbmFtZT0iQ2FwYSAyIiB2aWV3Qm94PSIwIDAgNDE3LjA0IDcwLjQ4Ij48ZGVmcz48c3R5bGU+ICAgICAgLmNscy0xIHsgICAgICAgIGZpbGw6ICMwMTVhNDE7ICAgICAgfSAgICAgIC5jbHMtMiB7ICAgICAgICBmaWxsOiAjMGNhNjRhOyAgICAgIH0gICAgPC9zdHlsZT48L2RlZnM+PGcgaWQ9IkNhcGFfMS0yIiBkYXRhLW5hbWU9IkNhcGEgMSI+PGc+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjUuODUsNTIuMzloMTAuOTR2OC4wNWMtMS4zLjk4LTIuODMsMS43Ny00LjYsMi4zNy0xLjc3LjU5LTMuNjcuODktNS43Ljg5LTIuMTksMC00LjE4LS4zOS01Ljk0LTEuMTYtMS43Ny0uNzgtMy4yOS0xLjg0LTQuNTctMy4xOS0xLjI4LTEuMzUtMi4yNy0yLjk2LTIuOTYtNC44NC0uNjktMS44OC0xLjA0LTMuOTItMS4wNC02LjEydi0uMTJjMC0yLjA0LjM2LTMuOTgsMS4wNy01LjgyLjcxLTEuODQsMS42OS0zLjQ0LDIuOTMtNC44MSwxLjI0LTEuMzcsMi43MS0yLjQ2LDQuNC0zLjI4LDEuNjktLjgyLDMuNTEtMS4yMyw1LjQ3LTEuMjMsMS4zNCwwLDIuNTguMTEsMy43LjM0LDEuMTIuMjMsMi4xNS41MywzLjA5LjkyLjk0LjM5LDEuODMuODcsMi42OSwxLjQ0Ljg2LjU3LDEuNjksMS4yLDIuNTEsMS44OWw0Ljc2LTUuNjhjLTEuMS0uOTQtMi4yMy0xLjc2LTMuMzktMi40Ny0xLjE2LS43MS0yLjM5LTEuMzItMy43LTEuOC0xLjMtLjQ5LTIuNzItLjg3LTQuMjUtMS4xMy0xLjUzLS4yNi0zLjIzLS40LTUuMS0uNC0zLjIyLDAtNi4xOC41OS04Ljg5LDEuNzctMi43MSwxLjE4LTUuMDUsMi43OC03LjAxLDQuOC0xLjk3LDIuMDItMy41LDQuMzctNC41OCw3LjA2LTEuMDksMi42OS0xLjYzLDUuNTItMS42Myw4LjQ5di4xMmMwLDMuMTQuNTMsNi4wNCwxLjU5LDguNzEsMS4wNiwyLjY3LDIuNTYsNC45OSw0LjQ5LDYuOTcsMS45MywxLjk4LDQuMjYsMy41Myw2Ljk5LDQuNjQsMi43MywxLjEyLDUuNzYsMS42OCw5LjEsMS42OCwxLjg3LDAsMy42Ny0uMTcsNS4zOC0uNTIsMS43MS0uMzUsMy4zMS0uODMsNC43OS0xLjQ0LDEuNDktLjYxLDIuODctMS4zMiw0LjE2LTIuMTQsMS4yOC0uODEsMi40NS0xLjY3LDMuNTEtMi41N3YtMTcuOTdoLTE4LjIxdjYuNTRaTTE2MS43OCw1MS41OWMwLDMuOTUtLjk2LDYuOTMtMi44OSw4LjkyLTEuOTMsMi00LjU3LDIuOTktNy45MywyLjk5cy02LjA2LTEuMDQtNy45OS0zLjEyYy0xLjkzLTIuMDgtMi44OS01LjExLTIuODktOS4xMXYtMjQuMzJoLTcuNDV2MjQuNjNjMCwzLjEuNDMsNS44MiwxLjI4LDguMTYuODUsMi4zNCwyLjA4LDQuMzEsMy42Nyw1LjksMS41OSwxLjU5LDMuNSwyLjc4LDUuNzQsMy41NywyLjI0LjgsNC43NCwxLjE5LDcuNTEsMS4xOXM1LjM1LS40LDcuNjEtMS4xOWMyLjI2LS43OSw0LjE5LTIsNS43Ny0zLjYsMS41OS0xLjYxLDIuODItMy42MiwzLjctNi4wMi44Ny0yLjQsMS4zMS01LjIsMS4zMS04LjM3di0yNC4yNmgtNy40NXYyNC42M1pNMTguODIsMjYuNjZMMCw2OS43NGg3LjdsNC40LTEwLjMzaDIwLjIybDQuMzQsMTAuMzNoNy45NEwyNS43OCwyNi42NmgtNi45NlpNMTQuODUsNTIuNzVsNy4zMy0xNy4xMSw3LjM5LDE3LjExaC0xNC43MlpNMTE5LjgzLDUxLjgxYzEuMjQtLjc1LDIuMzEtMS42NywzLjIxLTIuNzUuOS0xLjA4LDEuNi0yLjMyLDIuMTEtMy43My41MS0xLjQxLjc2LTIuOTguNzYtNC43NHYtLjEyYzAtMS44Ny0uMzEtMy41OS0uOTItNS4xMy0uNjEtMS41NS0xLjQ5LTIuOTEtMi42My00LjEtMS4zOS0xLjM0LTMuMTItMi4zOS01LjE5LTMuMTUtMi4wOC0uNzUtNC40Ni0xLjEzLTcuMTUtMS4xM2gtMTkuMDZ2NDIuNzhoNy40NXYtMTQuOTFoOS40NGwxMC41NCwxNC45MWg4Ljg2bC0xMS41NS0xNi4xOWMxLjUxLS40MSwyLjg4LS45OSw0LjEyLTEuNzRNOTguNDIsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNMjA0LjYxLDYyLjA4Yy0xLjg3LDEtNC4xMiwxLjUtNi43MiwxLjUtMi4wNCwwLTMuOTItLjQtNS42NS0xLjE5LTEuNzMtLjc5LTMuMjMtMS44OC00LjQ5LTMuMjctMS4yNi0xLjM4LTIuMjQtMy0yLjkzLTQuODYtLjY5LTEuODYtMS4wNC0zLjgyLTEuMDQtNS45di0uMTJjMC0yLjA4LjM1LTQuMDMsMS4wNC01Ljg3LjY5LTEuODMsMS42Ny0zLjQzLDIuOTMtNC44LDEuMjYtMS4zNiwyLjc2LTIuNDQsNC40OS0zLjI0LDEuNzMtLjc5LDMuNjItMS4xOSw1LjY1LTEuMTksMi40NCwwLDQuNjIuNDksNi41NCwxLjQ3LDEuOTEuOTgsMy43MywyLjI2LDUuNDQsMy44NWw0LjgzLTUuNTZjLTEuMDItLjk4LTIuMS0xLjg3LTMuMjQtMi42OS0xLjE0LS44MS0yLjM4LTEuNTItMy43My0yLjExLTEuMzQtLjU5LTIuODItMS4wNS00LjQzLTEuMzctMS42MS0uMzMtMy4zOS0uNDktNS4zNS0uNDktMy4yNiwwLTYuMjMuNTgtOC45MiwxLjc0LTIuNjksMS4xNi01LjAyLDIuNzUtNi45OCw0Ljc3cy0zLjUsNC4zNi00LjU4LDcuMDNjLTEuMDksMi42Ny0xLjYzLDUuNTMtMS42Myw4LjU5di4xMmMwLDMuMDYuNTUsNS45MywxLjY2LDguNjIsMS4xMSwyLjY5LDIuNjMsNS4wMiw0LjU4LDcsMS45NSwxLjk4LDQuMjQsMy41NCw2Ljg5LDQuNjcsMi42NSwxLjE0LDUuNTQsMS43MSw4LjY4LDEuNzEsMiwwLDMuODItLjE3LDUuNDctLjUyLDEuNjUtLjM1LDMuMTctLjg2LDQuNTUtMS41MywxLjM4LS42NywyLjY4LTEuNDcsMy44OC0yLjM4LDEuMi0uOTIsMi4zNS0xLjk3LDMuNDUtMy4xNWwtNC44My00Ljg5Yy0xLjgzLDEuNzEtMy42OSwzLjA3LTUuNTYsNC4wNk0zNzMuMzIsNTEuODFjMS4yNC0uNzUsMi4zMS0xLjY3LDMuMjEtMi43NS45LTEuMDgsMS42LTIuMzIsMi4xMS0zLjczLjUxLTEuNDEuNzYtMi45OC43Ni00Ljc0di0uMTJjMC0xLjg3LS4zMS0zLjU5LS45Mi01LjEzLS42MS0xLjU1LTEuNDktMi45MS0yLjYzLTQuMS0xLjM5LTEuMzQtMy4xMi0yLjM5LTUuMTktMy4xNS0yLjA4LS43NS00LjQ2LTEuMTMtNy4xNS0xLjEzaC0xOS4wNnY0Mi43OGg3LjQ2di0xNC45MWg5LjQ0bDEwLjU0LDE0LjkxaDguODZsLTExLjU1LTE2LjE5YzEuNTEtLjQxLDIuODgtLjk5LDQuMTItMS43NE0zNTEuOTEsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNNDE2LjE1LDUyLjg1Yy0uNTktMS4zMi0xLjQ2LTIuNDktMi42LTMuNDgtMS4xNC0xLTIuNTgtMS44NC00LjMyLTIuNTQtMS43NC0uNjktMy43My0xLjMyLTUuOTctMS44OS0yLjA0LS40OS0zLjczLS45Ni01LjA1LTEuNC0xLjMzLS40NS0yLjM3LS45My0zLjEyLTEuNDQtLjc2LS41MS0xLjI4LTEuMDgtMS41Ni0xLjcxLS4yOS0uNjMtLjQzLTEuMzUtLjQzLTIuMTd2LS4xMmMwLTEuNDMuNjEtMi42MywxLjgzLTMuNjEsMS4yMi0uOTgsMi45My0xLjQ3LDUuMTMtMS40NywxLjk2LDAsMy44OS4zOCw1LjgxLDEuMTMsMS45MS43NSwzLjg1LDEuODQsNS44LDMuMjdsNC4wMy01LjY4Yy0yLjItMS43NS00LjU1LTMuMDktNy4wNi00LTIuNTEtLjkyLTUuMzMtMS4zNy04LjQ2LTEuMzctMi4xMiwwLTQuMDcuMy01Ljg2LjkyLTEuNzkuNjEtMy4zMiwxLjQ2LTQuNTksMi41NC0xLjI3LDEuMDgtMi4yNywyLjM4LTMsMy45MS0uNzMsMS41My0xLjA5LDMuMjEtMS4wOSw1LjA0di4xMmMwLDEuOTYuMzIsMy42My45NSw1LjAxLjYzLDEuMzksMS41NSwyLjU2LDIuNzYsMy41MSwxLjIxLjk2LDIuNywxLjc3LDQuNDcsMi40NSwxLjc4LjY3LDMuODEsMS4yNyw2LjA5LDEuOCwyLC40NSwzLjYyLjksNC44NywxLjM1LDEuMjQuNDUsMi4yMy45NCwyLjk0LDEuNDcuNzEuNTMsMS4yLDEuMDksMS40NywxLjY4LjI2LjU5LjQsMS4yNy40LDIuMDV2LjEyYzAsMS42My0uNjgsMi45My0yLjA1LDMuOTEtMS4zNy45OC0zLjIxLDEuNDctNS41MywxLjQ3LTIuNjksMC01LjA5LS40OC03LjIxLTEuNDQtMi4xMi0uOTYtNC4yMi0yLjMzLTYuMjktNC4xM2wtNC41Miw1LjM4YzIuNTcsMi4zMiw1LjM1LDQuMDQsOC4zNyw1LjE2LDMuMDEsMS4xMiw2LjE3LDEuNjgsOS40NywxLjY4LDIuMjQsMCw0LjMtLjI4LDYuMTctLjg2LDEuODctLjU3LDMuNDctMS40LDQuOC0yLjUsMS4zMy0xLjEsMi4zNy0yLjQ1LDMuMTItNC4wMy43NS0xLjU5LDEuMTItMy4zOCwxLjEyLTUuMzh2LS4xMmMwLTEuNzUtLjMtMy4yOS0uODktNC42MU0zMTIuODEsNTEuNTNoMjEuNDV2LTYuNzhoLTIxLjQ1di0xMWgyNC4xOXYtNi43OWgtMzEuNjV2NDIuNzhoMzEuOTZ2LTYuNzhoLTI0LjV2LTExLjQzWk0yMzYuMTMsMjYuNjZsLTE4LjgyLDQzLjA4aDcuN2w0LjQtMTAuMzNoMjAuMjJsNC4zNCwxMC4zM2g3Ljk0bC0xOC44Mi00My4wOGgtNi45NlpNMjMyLjE2LDUyLjc1bDcuMzMtMTcuMTEsNy4zOSwxNy4xMWgtMTQuNzJaTTI5NS4xMiwzMC44OGMtMS40MS0xLjI2LTMuMTItMi4yMy01LjEzLTIuOS0yLjAxLS42Ny00LjI3LTEuMDEtNi43NS0xLjAxaC0xNi44NnY0Mi43OGg3LjQ1di0xMy43NWg4LjUxYzIuMzcsMCw0LjU5LS4zMiw2LjY4LS45NSwyLjA4LS42MywzLjktMS41Niw1LjQ1LTIuNzgsMS41NS0xLjIyLDIuNzgtMi43NCwzLjY4LTQuNTUuOS0xLjgxLDEuMzUtMy45MiwxLjM1LTYuMzN2LS4xMmMwLTIuMTYtLjM4LTQuMTItMS4xMy01Ljg3LS43NS0xLjc1LTEuODMtMy4yNi0zLjI0LTQuNTJNMjkxLjg1LDQxLjU0YzAsMi4yNS0uODMsNC4wOS0yLjQ4LDUuNTItMS42NiwxLjQzLTMuOTEsMi4xNS02Ljc3LDIuMTVoLTguNzd2LTE1LjQ2aDguNzdjMi44MiwwLDUuMDcuNjQsNi43NCwxLjkzLDEuNjcsMS4yOSwyLjUxLDMuMiwyLjUxLDUuNzR2LjEyWiI+PC9wYXRoPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTE5Ni4zNCwwYy03Ljk1LDAtMTQuNzEsNS4wOC0xNy4yNCwxMi4xNi0zLjMzLTQuNTktOC43Mi03LjU4LTE0LjgyLTcuNTgsMCwxMC4xMSw4LjIsMTguMzIsMTguMzIsMTguMzIsMC0xLjczLS4yNi0zLjQxLS43MS01LDguMjUtMS43OCwxNC40NS05LjEyLDE0LjQ1LTE3LjkiPjwvcGF0aD48L2c+PC9nPjwvc3ZnPg==" alt="Agrucapers" class="h-7 w-auto" />
+      </div>
+      <h1 class="text-base font-bold leading-tight">Estructura_AGRU_PRUEBA_v3</h1>
+      <p class="text-xs opacity-70 mt-1">Arquitectura DWH · AGRUCAPERS · v1.0</p>
+    </div>
+    <nav class="text-sm py-2">
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Inicio</div>
+      <a href="#hero" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Portada</a>
+      <a href="#contexto" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Contexto del proyecto</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Arquitectura</div>
+      <a href="#arquitectura" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Visión general</a>
+      <a href="#diagrama" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Diagrama de capas</a>
+      <a href="#capas" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Responsabilidades por capa</a>
+      <a href="#stack" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Stack tecnológico</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Modelo de datos</div>
+      <a href="#modelo" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Enfoque Kimball</a>
+      <a href="#hechos" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Tablas de hechos</a>
+      <a href="#dimensiones" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Dimensiones</a>
+      <a href="#snapshot" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Accumulating Snapshot</a>
+      <a href="#relaciones" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Relaciones (62)</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Catálogo</div>
+      <a href="#catalogo" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Stage TableList (106)</a>
+      <a href="#diccionario" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Diccionario de columnas</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">ETL</div>
+      <a href="#etl" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Flujo diario</a>
+      <a href="#reglas" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Reglas de negocio</a>
+      <a href="#mantenimiento" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Mantenimiento TableList</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Medidas DAX</div>
+      <a href="#medidas" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Resumen (111)</a>
+      <a href="#dax-ejemplos" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Expresiones clave</a>
+
+      <div class="px-6 pt-4 pb-1 text-[10px] tracking-wider opacity-50 uppercase">Anexo</div>
+      <a href="#mapa-sap" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Mapa SAP ↔ Hechos</a>
+      <a href="#validaciones" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Validaciones abiertas</a>
+      <a href="#paleta" class="nav-link block px-6 py-2 border-l-2 border-transparent text-white/85 hover:bg-white/5 hover:text-white">Paleta Power BI</a>
+    </nav>
+    <div class="mt-auto px-6 py-4 border-t border-white/10">
+      <div class="text-[10px] uppercase tracking-widest opacity-60 mb-2">Desarrollado por</div>
+      <div class="bg-white rounded-md p-2 flex items-center justify-center shadow-card">
+        <img src="data:image/svg+xml;base64,PHN2ZyBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA2MjQuNSAxODQiIHZpZXdCb3g9IjAgMCA2MjQuNSAxODQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZD0ibTAgMGg2MjQuNXYxODRoLTYyNC41eiIvPjwvY2xpcFBhdGg+PGcgZmlsbD0iIzA3MTUzZSI+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjYuOCA0Mi43Yy0zLjUtMy41LTcuNS02LjItMTItOC4xLTQuNy0yLTkuNi0zLTE0LjgtM3YyNC4xYzcuNiAwIDEzLjggNi4yIDEzLjggMTMuOHY4M2gyNC4xdi04M2MwLTUuMS0xLTEwLjEtMy0xNC44LTEuOS00LjQtNC42LTguNS04LjEtMTIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xMzUuOCA5OC41djU0LjFoLTI0LjF2LTQ2YzAtMTAuMi02LjQtMTYuOC0xNi4zLTE2LjgtMTAuMiAwLTE3LjMgNi44LTE3LjMgMTcuMXY0NS43aC0yNC4xdi04NC4xaDI0LjF2OC40YzYuNi02LjggMTUuMi0xMC40IDI1LjYtMTAuNCAxOS4yIDAgMzIuMSAxMi43IDMyLjEgMzIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xNTAuMSA5MXYtNi4zYzAtMTcuOCA5LjEtMzAuMyAyOS43LTMwLjMgNi4zIDAgMTEuMiAxLjIgMTYgMy42djIxLjNjLTMuMS0yLTYuNi0zLTEwLjYtMy03LjQgMC0xMSAzLjYtMTEgMTAuMXY0LjZoMTkuOXYyMS45aC0xOS45djM5LjZoLTI0LjF2LTM5LjZ6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjA1IDExMC41YzAtMjUuMSAxOS41LTQ0IDQ1LjMtNDQgMjUuOSAwIDQ1LjMgMTkgNDUuMyA0NHMtMTkuNSA0NC00NS4zIDQ0LTQ1LjMtMTguOS00NS4zLTQ0bTY2IDBjMC0xMS45LTguNy0yMC44LTIwLjYtMjAuOHMtMjAuNiA4LjktMjAuNiAyMC44IDguNyAyMC44IDIwLjYgMjAuOGMxMS44IDAgMjAuNi04LjkgMjAuNi0yMC44Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMzU3LjUgNjcuMXYyNC43aC0zLjZjLTE0LjcgMC0yMi44IDguNC0yMi44IDIxLjR2MzkuMmgtMjQuMXYtODMuOWgyNC4xdjkuNWM1LjktNi45IDEzLjctMTAuOSAyMi44LTEwLjl6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNTQzLjkgMTE4LjRoLTYyLjZjMyA5LjQgMTEgMTUuMiAyMS42IDE1LjIgOS42IDAgMTcuMS00LjUgMjEuMS05LjRsMTYuMiAxNGMtOC45IDEwLjEtMjIuNCAxNi4zLTM3LjkgMTYuMy0yNi43IDAtNDYuOC0xOS4xLTQ2LjgtNDQuNSAwLTI0LjcgMTkuMy00My41IDQ0LjgtNDMuNSAyNS4yIDAgNDQuMiAxOC44IDQ0LjIgNDQuMy0uMSAyLjMtLjIgNS41LS42IDcuNm0tNjIuOC0xNmgzNy44Yy0yLjYtOS40LTkuOS0xNS4yLTE5LTE1LjJzLTE2LjMgNi0xOC44IDE1LjIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im01NTEuOCAxNDEuOCAxMS4yLTE1LjVjNi40IDUuNCAxNC4zIDkuMSAyNC4xIDkuMSA3LjkgMCAxMy40LTIuMyAxMy40LTYuOCAwLTQuOC02LjQtNi40LTE1LTguNC0xMy40LTMtMzEtNi45LTMxLTI2LjcgMC0xOC4xIDE1LjgtMjcgMzUtMjcgMTQuOCAwIDI1LjYgNS4zIDMzLjUgMTFsLTExLjMgMTUuNWMtNi4zLTQuMy0xMy4yLTcuNC0yMS40LTcuNC02LjQgMC0xMS43IDEuOC0xMS43IDYuMSAwIDQuOCA2LjQgNi4zIDE1IDguMSAxMy4yIDIuOCAzMSA2LjkgMzEgMjYuNSAwIDE4LjUtMTYuMiAyOC4yLTM2LjYgMjguMi0xNiAwLTI3LjktNS45LTM2LjItMTIuNyIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNhKSIgZD0ibTQ1My41IDE3NS4yYy0zLjctMTQuOS0xNS40LTIzLjUtMzEuNy0yMy41aC0yNi4yYy00LjUgMC03LjYtMi41LTcuNi02LjMgMC0yLjUgMS4zLTQuOCAzLjgtNi40IDQgMS4yIDguMSAxLjYgMTIuNCAxLjYgMjIuOCAwIDM5LjktMTUuOCAzOS45LTM3LjEgMC04LjEtMi41LTE1LjItNi42LTIxLjEuOC0zLjEgNC01LjEgNy45LTUuMWg1Ljl2LTIyLjJoLTcuMWMtMTEuNSAwLTE5LjkgNS44LTIyLjQgMTQuOC01LjMtMi4xLTExLjItMy41LTE3LjYtMy41LTIyLjggMC0zOS43IDE1LjgtMzkuNyAzNy4xIDAgMTAuNCA0LjEgMTkuNiAxMSAyNi4yLTcuMSA0LjMtMTEuNSAxMi45LTExLjUgMjEuOCAwIDE0IDEwLjcgMjMuNCAyNyAyMy40aDI2LjJjNi44IDAgMTEuNCAzLjYgMTIgOS4xaDI1LjdzLS43LTYuMS0xLjQtOC44bS00OS40LTg2YzguNiAwIDE1LjIgNi4xIDE1LjIgMTQuM3MtNi42IDE0LjMtMTUuMiAxNC4zLTE1LTYuMS0xNS0xNC4zIDYuMy0xNC4zIDE1LTE0LjMiLz48L2c+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNDMuNCAxNi4xYzAgOC45LTcuMiAxNi4xLTE2LjEgMTYuMXMtMTYuMS03LjItMTYuMS0xNi4xIDcuMy0xNi4xIDE2LjEtMTYuMSAxNi4xIDcuMiAxNi4xIDE2LjEiIGZpbGw9IiMwMDc0YmMiLz48L3N2Zz4=" alt="Inforges" class="h-5 w-auto" />
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 min-w-0">
+
+    <!-- HERO -->
+    <section id="hero" class="min-h-screen px-6 md:px-16 py-20 flex flex-col justify-center text-white" style="background: linear-gradient(135deg, #0A2540 0%, #004F84 55%, #0074BD 100%);">
+      <div class="flex flex-wrap items-center gap-4 mb-8">
+        <div class="bg-white rounded-lg px-4 py-3 shadow-card"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSJDYXBhXzIiIGRhdGEtbmFtZT0iQ2FwYSAyIiB2aWV3Qm94PSIwIDAgNDE3LjA0IDcwLjQ4Ij48ZGVmcz48c3R5bGU+ICAgICAgLmNscy0xIHsgICAgICAgIGZpbGw6ICMwMTVhNDE7ICAgICAgfSAgICAgIC5jbHMtMiB7ICAgICAgICBmaWxsOiAjMGNhNjRhOyAgICAgIH0gICAgPC9zdHlsZT48L2RlZnM+PGcgaWQ9IkNhcGFfMS0yIiBkYXRhLW5hbWU9IkNhcGEgMSI+PGc+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjUuODUsNTIuMzloMTAuOTR2OC4wNWMtMS4zLjk4LTIuODMsMS43Ny00LjYsMi4zNy0xLjc3LjU5LTMuNjcuODktNS43Ljg5LTIuMTksMC00LjE4LS4zOS01Ljk0LTEuMTYtMS43Ny0uNzgtMy4yOS0xLjg0LTQuNTctMy4xOS0xLjI4LTEuMzUtMi4yNy0yLjk2LTIuOTYtNC44NC0uNjktMS44OC0xLjA0LTMuOTItMS4wNC02LjEydi0uMTJjMC0yLjA0LjM2LTMuOTgsMS4wNy01LjgyLjcxLTEuODQsMS42OS0zLjQ0LDIuOTMtNC44MSwxLjI0LTEuMzcsMi43MS0yLjQ2LDQuNC0zLjI4LDEuNjktLjgyLDMuNTEtMS4yMyw1LjQ3LTEuMjMsMS4zNCwwLDIuNTguMTEsMy43LjM0LDEuMTIuMjMsMi4xNS41MywzLjA5LjkyLjk0LjM5LDEuODMuODcsMi42OSwxLjQ0Ljg2LjU3LDEuNjksMS4yLDIuNTEsMS44OWw0Ljc2LTUuNjhjLTEuMS0uOTQtMi4yMy0xLjc2LTMuMzktMi40Ny0xLjE2LS43MS0yLjM5LTEuMzItMy43LTEuOC0xLjMtLjQ5LTIuNzItLjg3LTQuMjUtMS4xMy0xLjUzLS4yNi0zLjIzLS40LTUuMS0uNC0zLjIyLDAtNi4xOC41OS04Ljg5LDEuNzctMi43MSwxLjE4LTUuMDUsMi43OC03LjAxLDQuOC0xLjk3LDIuMDItMy41LDQuMzctNC41OCw3LjA2LTEuMDksMi42OS0xLjYzLDUuNTItMS42Myw4LjQ5di4xMmMwLDMuMTQuNTMsNi4wNCwxLjU5LDguNzEsMS4wNiwyLjY3LDIuNTYsNC45OSw0LjQ5LDYuOTcsMS45MywxLjk4LDQuMjYsMy41Myw2Ljk5LDQuNjQsMi43MywxLjEyLDUuNzYsMS42OCw5LjEsMS42OCwxLjg3LDAsMy42Ny0uMTcsNS4zOC0uNTIsMS43MS0uMzUsMy4zMS0uODMsNC43OS0xLjQ0LDEuNDktLjYxLDIuODctMS4zMiw0LjE2LTIuMTQsMS4yOC0uODEsMi40NS0xLjY3LDMuNTEtMi41N3YtMTcuOTdoLTE4LjIxdjYuNTRaTTE2MS43OCw1MS41OWMwLDMuOTUtLjk2LDYuOTMtMi44OSw4LjkyLTEuOTMsMi00LjU3LDIuOTktNy45MywyLjk5cy02LjA2LTEuMDQtNy45OS0zLjEyYy0xLjkzLTIuMDgtMi44OS01LjExLTIuODktOS4xMXYtMjQuMzJoLTcuNDV2MjQuNjNjMCwzLjEuNDMsNS44MiwxLjI4LDguMTYuODUsMi4zNCwyLjA4LDQuMzEsMy42Nyw1LjksMS41OSwxLjU5LDMuNSwyLjc4LDUuNzQsMy41NywyLjI0LjgsNC43NCwxLjE5LDcuNTEsMS4xOXM1LjM1LS40LDcuNjEtMS4xOWMyLjI2LS43OSw0LjE5LTIsNS43Ny0zLjYsMS41OS0xLjYxLDIuODItMy42MiwzLjctNi4wMi44Ny0yLjQsMS4zMS01LjIsMS4zMS04LjM3di0yNC4yNmgtNy40NXYyNC42M1pNMTguODIsMjYuNjZMMCw2OS43NGg3LjdsNC40LTEwLjMzaDIwLjIybDQuMzQsMTAuMzNoNy45NEwyNS43OCwyNi42NmgtNi45NlpNMTQuODUsNTIuNzVsNy4zMy0xNy4xMSw3LjM5LDE3LjExaC0xNC43MlpNMTE5LjgzLDUxLjgxYzEuMjQtLjc1LDIuMzEtMS42NywzLjIxLTIuNzUuOS0xLjA4LDEuNi0yLjMyLDIuMTEtMy43My41MS0xLjQxLjc2LTIuOTguNzYtNC43NHYtLjEyYzAtMS44Ny0uMzEtMy41OS0uOTItNS4xMy0uNjEtMS41NS0xLjQ5LTIuOTEtMi42My00LjEtMS4zOS0xLjM0LTMuMTItMi4zOS01LjE5LTMuMTUtMi4wOC0uNzUtNC40Ni0xLjEzLTcuMTUtMS4xM2gtMTkuMDZ2NDIuNzhoNy40NXYtMTQuOTFoOS40NGwxMC41NCwxNC45MWg4Ljg2bC0xMS41NS0xNi4xOWMxLjUxLS40MSwyLjg4LS45OSw0LjEyLTEuNzRNOTguNDIsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNMjA0LjYxLDYyLjA4Yy0xLjg3LDEtNC4xMiwxLjUtNi43MiwxLjUtMi4wNCwwLTMuOTItLjQtNS42NS0xLjE5LTEuNzMtLjc5LTMuMjMtMS44OC00LjQ5LTMuMjctMS4yNi0xLjM4LTIuMjQtMy0yLjkzLTQuODYtLjY5LTEuODYtMS4wNC0zLjgyLTEuMDQtNS45di0uMTJjMC0yLjA4LjM1LTQuMDMsMS4wNC01Ljg3LjY5LTEuODMsMS42Ny0zLjQzLDIuOTMtNC44LDEuMjYtMS4zNiwyLjc2LTIuNDQsNC40OS0zLjI0LDEuNzMtLjc5LDMuNjItMS4xOSw1LjY1LTEuMTksMi40NCwwLDQuNjIuNDksNi41NCwxLjQ3LDEuOTEuOTgsMy43MywyLjI2LDUuNDQsMy44NWw0LjgzLTUuNTZjLTEuMDItLjk4LTIuMS0xLjg3LTMuMjQtMi42OS0xLjE0LS44MS0yLjM4LTEuNTItMy43My0yLjExLTEuMzQtLjU5LTIuODItMS4wNS00LjQzLTEuMzctMS42MS0uMzMtMy4zOS0uNDktNS4zNS0uNDktMy4yNiwwLTYuMjMuNTgtOC45MiwxLjc0LTIuNjksMS4xNi01LjAyLDIuNzUtNi45OCw0Ljc3cy0zLjUsNC4zNi00LjU4LDcuMDNjLTEuMDksMi42Ny0xLjYzLDUuNTMtMS42Myw4LjU5di4xMmMwLDMuMDYuNTUsNS45MywxLjY2LDguNjIsMS4xMSwyLjY5LDIuNjMsNS4wMiw0LjU4LDcsMS45NSwxLjk4LDQuMjQsMy41NCw2Ljg5LDQuNjcsMi42NSwxLjE0LDUuNTQsMS43MSw4LjY4LDEuNzEsMiwwLDMuODItLjE3LDUuNDctLjUyLDEuNjUtLjM1LDMuMTctLjg2LDQuNTUtMS41MywxLjM4LS42NywyLjY4LTEuNDcsMy44OC0yLjM4LDEuMi0uOTIsMi4zNS0xLjk3LDMuNDUtMy4xNWwtNC44My00Ljg5Yy0xLjgzLDEuNzEtMy42OSwzLjA3LTUuNTYsNC4wNk0zNzMuMzIsNTEuODFjMS4yNC0uNzUsMi4zMS0xLjY3LDMuMjEtMi43NS45LTEuMDgsMS42LTIuMzIsMi4xMS0zLjczLjUxLTEuNDEuNzYtMi45OC43Ni00Ljc0di0uMTJjMC0xLjg3LS4zMS0zLjU5LS45Mi01LjEzLS42MS0xLjU1LTEuNDktMi45MS0yLjYzLTQuMS0xLjM5LTEuMzQtMy4xMi0yLjM5LTUuMTktMy4xNS0yLjA4LS43NS00LjQ2LTEuMTMtNy4xNS0xLjEzaC0xOS4wNnY0Mi43OGg3LjQ2di0xNC45MWg5LjQ0bDEwLjU0LDE0LjkxaDguODZsLTExLjU1LTE2LjE5YzEuNTEtLjQxLDIuODgtLjk5LDQuMTItMS43NE0zNTEuOTEsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNNDE2LjE1LDUyLjg1Yy0uNTktMS4zMi0xLjQ2LTIuNDktMi42LTMuNDgtMS4xNC0xLTIuNTgtMS44NC00LjMyLTIuNTQtMS43NC0uNjktMy43My0xLjMyLTUuOTctMS44OS0yLjA0LS40OS0zLjczLS45Ni01LjA1LTEuNC0xLjMzLS40NS0yLjM3LS45My0zLjEyLTEuNDQtLjc2LS41MS0xLjI4LTEuMDgtMS41Ni0xLjcxLS4yOS0uNjMtLjQzLTEuMzUtLjQzLTIuMTd2LS4xMmMwLTEuNDMuNjEtMi42MywxLjgzLTMuNjEsMS4yMi0uOTgsMi45My0xLjQ3LDUuMTMtMS40NywxLjk2LDAsMy44OS4zOCw1LjgxLDEuMTMsMS45MS43NSwzLjg1LDEuODQsNS44LDMuMjdsNC4wMy01LjY4Yy0yLjItMS43NS00LjU1LTMuMDktNy4wNi00LTIuNTEtLjkyLTUuMzMtMS4zNy04LjQ2LTEuMzctMi4xMiwwLTQuMDcuMy01Ljg2LjkyLTEuNzkuNjEtMy4zMiwxLjQ2LTQuNTksMi41NC0xLjI3LDEuMDgtMi4yNywyLjM4LTMsMy45MS0uNzMsMS41My0xLjA5LDMuMjEtMS4wOSw1LjA0di4xMmMwLDEuOTYuMzIsMy42My45NSw1LjAxLjYzLDEuMzksMS41NSwyLjU2LDIuNzYsMy41MSwxLjIxLjk2LDIuNywxLjc3LDQuNDcsMi40NSwxLjc4LjY3LDMuODEsMS4yNyw2LjA5LDEuOCwyLC40NSwzLjYyLjksNC44NywxLjM1LDEuMjQuNDUsMi4yMy45NCwyLjk0LDEuNDcuNzEuNTMsMS4yLDEuMDksMS40NywxLjY4LjI2LjU5LjQsMS4yNy40LDIuMDV2LjEyYzAsMS42My0uNjgsMi45My0yLjA1LDMuOTEtMS4zNy45OC0zLjIxLDEuNDctNS41MywxLjQ3LTIuNjksMC01LjA5LS40OC03LjIxLTEuNDQtMi4xMi0uOTYtNC4yMi0yLjMzLTYuMjktNC4xM2wtNC41Miw1LjM4YzIuNTcsMi4zMiw1LjM1LDQuMDQsOC4zNyw1LjE2LDMuMDEsMS4xMiw2LjE3LDEuNjgsOS40NywxLjY4LDIuMjQsMCw0LjMtLjI4LDYuMTctLjg2LDEuODctLjU3LDMuNDctMS40LDQuOC0yLjUsMS4zMy0xLjEsMi4zNy0yLjQ1LDMuMTItNC4wMy43NS0xLjU5LDEuMTItMy4zOCwxLjEyLTUuMzh2LS4xMmMwLTEuNzUtLjMtMy4yOS0uODktNC42MU0zMTIuODEsNTEuNTNoMjEuNDV2LTYuNzhoLTIxLjQ1di0xMWgyNC4xOXYtNi43OWgtMzEuNjV2NDIuNzhoMzEuOTZ2LTYuNzhoLTI0LjV2LTExLjQzWk0yMzYuMTMsMjYuNjZsLTE4LjgyLDQzLjA4aDcuN2w0LjQtMTAuMzNoMjAuMjJsNC4zNCwxMC4zM2g3Ljk0bC0xOC44Mi00My4wOGgtNi45NlpNMjMyLjE2LDUyLjc1bDcuMzMtMTcuMTEsNy4zOSwxNy4xMWgtMTQuNzJaTTI5NS4xMiwzMC44OGMtMS40MS0xLjI2LTMuMTItMi4yMy01LjEzLTIuOS0yLjAxLS42Ny00LjI3LTEuMDEtNi43NS0xLjAxaC0xNi44NnY0Mi43OGg3LjQ1di0xMy43NWg4LjUxYzIuMzcsMCw0LjU5LS4zMiw2LjY4LS45NSwyLjA4LS42MywzLjktMS41Niw1LjQ1LTIuNzgsMS41NS0xLjIyLDIuNzgtMi43NCwzLjY4LTQuNTUuOS0xLjgxLDEuMzUtMy45MiwxLjM1LTYuMzN2LS4xMmMwLTIuMTYtLjM4LTQuMTItMS4xMy01Ljg3LS43NS0xLjc1LTEuODMtMy4yNi0zLjI0LTQuNTJNMjkxLjg1LDQxLjU0YzAsMi4yNS0uODMsNC4wOS0yLjQ4LDUuNTItMS42NiwxLjQzLTMuOTEsMi4xNS02Ljc3LDIuMTVoLTguNzd2LTE1LjQ2aDguNzdjMi44MiwwLDUuMDcuNjQsNi43NCwxLjkzLDEuNjcsMS4yOSwyLjUxLDMuMiwyLjUxLDUuNzR2LjEyWiI+PC9wYXRoPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTE5Ni4zNCwwYy03Ljk1LDAtMTQuNzEsNS4wOC0xNy4yNCwxMi4xNi0zLjMzLTQuNTktOC43Mi03LjU4LTE0LjgyLTcuNTgsMCwxMC4xMSw4LjIsMTguMzIsMTguMzIsMTguMzIsMC0xLjczLS4yNi0zLjQxLS43MS01LDguMjUtMS43OCwxNC40NS05LjEyLDE0LjQ1LTE3LjkiPjwvcGF0aD48L2c+PC9nPjwvc3ZnPg==" alt="Agrucapers" class="h-9 w-auto" /></div>
+        <span class="opacity-40 text-xl">×</span>
+        <div class="bg-white rounded-lg px-4 py-3 shadow-card"><img src="data:image/svg+xml;base64,PHN2ZyBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA2MjQuNSAxODQiIHZpZXdCb3g9IjAgMCA2MjQuNSAxODQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZD0ibTAgMGg2MjQuNXYxODRoLTYyNC41eiIvPjwvY2xpcFBhdGg+PGcgZmlsbD0iIzA3MTUzZSI+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjYuOCA0Mi43Yy0zLjUtMy41LTcuNS02LjItMTItOC4xLTQuNy0yLTkuNi0zLTE0LjgtM3YyNC4xYzcuNiAwIDEzLjggNi4yIDEzLjggMTMuOHY4M2gyNC4xdi04M2MwLTUuMS0xLTEwLjEtMy0xNC44LTEuOS00LjQtNC42LTguNS04LjEtMTIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xMzUuOCA5OC41djU0LjFoLTI0LjF2LTQ2YzAtMTAuMi02LjQtMTYuOC0xNi4zLTE2LjgtMTAuMiAwLTE3LjMgNi44LTE3LjMgMTcuMXY0NS43aC0yNC4xdi04NC4xaDI0LjF2OC40YzYuNi02LjggMTUuMi0xMC40IDI1LjYtMTAuNCAxOS4yIDAgMzIuMSAxMi43IDMyLjEgMzIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xNTAuMSA5MXYtNi4zYzAtMTcuOCA5LjEtMzAuMyAyOS43LTMwLjMgNi4zIDAgMTEuMiAxLjIgMTYgMy42djIxLjNjLTMuMS0yLTYuNi0zLTEwLjYtMy03LjQgMC0xMSAzLjYtMTEgMTAuMXY0LjZoMTkuOXYyMS45aC0xOS45djM5LjZoLTI0LjF2LTM5LjZ6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjA1IDExMC41YzAtMjUuMSAxOS41LTQ0IDQ1LjMtNDQgMjUuOSAwIDQ1LjMgMTkgNDUuMyA0NHMtMTkuNSA0NC00NS4zIDQ0LTQ1LjMtMTguOS00NS4zLTQ0bTY2IDBjMC0xMS45LTguNy0yMC44LTIwLjYtMjAuOHMtMjAuNiA4LjktMjAuNiAyMC44IDguNyAyMC44IDIwLjYgMjAuOGMxMS44IDAgMjAuNi04LjkgMjAuNi0yMC44Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMzU3LjUgNjcuMXYyNC43aC0zLjZjLTE0LjcgMC0yMi44IDguNC0yMi44IDIxLjR2MzkuMmgtMjQuMXYtODMuOWgyNC4xdjkuNWM1LjktNi45IDEzLjctMTAuOSAyMi44LTEwLjl6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNTQzLjkgMTE4LjRoLTYyLjZjMyA5LjQgMTEgMTUuMiAyMS42IDE1LjIgOS42IDAgMTcuMS00LjUgMjEuMS05LjRsMTYuMiAxNGMtOC45IDEwLjEtMjIuNCAxNi4zLTM3LjkgMTYuMy0yNi43IDAtNDYuOC0xOS4xLTQ2LjgtNDQuNSAwLTI0LjcgMTkuMy00My41IDQ0LjgtNDMuNSAyNS4yIDAgNDQuMiAxOC44IDQ0LjIgNDQuMy0uMSAyLjMtLjIgNS41LS42IDcuNm0tNjIuOC0xNmgzNy44Yy0yLjYtOS40LTkuOS0xNS4yLTE5LTE1LjJzLTE2LjMgNi0xOC44IDE1LjIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im01NTEuOCAxNDEuOCAxMS4yLTE1LjVjNi40IDUuNCAxNC4zIDkuMSAyNC4xIDkuMSA3LjkgMCAxMy40LTIuMyAxMy40LTYuOCAwLTQuOC02LjQtNi40LTE1LTguNC0xMy40LTMtMzEtNi45LTMxLTI2LjcgMC0xOC4xIDE1LjgtMjcgMzUtMjcgMTQuOCAwIDI1LjYgNS4zIDMzLjUgMTFsLTExLjMgMTUuNWMtNi4zLTQuMy0xMy4yLTcuNC0yMS40LTcuNC02LjQgMC0xMS43IDEuOC0xMS43IDYuMSAwIDQuOCA2LjQgNi4zIDE1IDguMSAxMy4yIDIuOCAzMSA2LjkgMzEgMjYuNSAwIDE4LjUtMTYuMiAyOC4yLTM2LjYgMjguMi0xNiAwLTI3LjktNS45LTM2LjItMTIuNyIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNhKSIgZD0ibTQ1My41IDE3NS4yYy0zLjctMTQuOS0xNS40LTIzLjUtMzEuNy0yMy41aC0yNi4yYy00LjUgMC03LjYtMi41LTcuNi02LjMgMC0yLjUgMS4zLTQuOCAzLjgtNi40IDQgMS4yIDguMSAxLjYgMTIuNCAxLjYgMjIuOCAwIDM5LjktMTUuOCAzOS45LTM3LjEgMC04LjEtMi41LTE1LjItNi42LTIxLjEuOC0zLjEgNC01LjEgNy45LTUuMWg1Ljl2LTIyLjJoLTcuMWMtMTEuNSAwLTE5LjkgNS44LTIyLjQgMTQuOC01LjMtMi4xLTExLjItMy41LTE3LjYtMy41LTIyLjggMC0zOS43IDE1LjgtMzkuNyAzNy4xIDAgMTAuNCA0LjEgMTkuNiAxMSAyNi4yLTcuMSA0LjMtMTEuNSAxMi45LTExLjUgMjEuOCAwIDE0IDEwLjcgMjMuNCAyNyAyMy40aDI2LjJjNi44IDAgMTEuNCAzLjYgMTIgOS4xaDI1LjdzLS43LTYuMS0xLjQtOC44bS00OS40LTg2YzguNiAwIDE1LjIgNi4xIDE1LjIgMTQuM3MtNi42IDE0LjMtMTUuMiAxNC4zLTE1LTYuMS0xNS0xNC4zIDYuMy0xNC4zIDE1LTE0LjMiLz48L2c+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNDMuNCAxNi4xYzAgOC45LTcuMiAxNi4xLTE2LjEgMTYuMXMtMTYuMS03LjItMTYuMS0xNi4xIDcuMy0xNi4xIDE2LjEtMTYuMSAxNi4xIDcuMiAxNi4xIDE2LjEiIGZpbGw9IiMwMDc0YmMiLz48L3N2Zz4=" alt="Inforges" class="h-8 w-auto" /></div>
+      </div>
+      <div class="inline-flex items-center gap-2 self-start bg-white/15 border border-white/20 rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase mb-5">Documentación técnica</div>
+      <h1 class="text-4xl md:text-6xl font-extrabold leading-[1.05] mb-4 max-w-4xl">Estructura_AGRU_PRUEBA_v3</h1>
+      <p class="text-lg md:text-xl opacity-90 max-w-3xl mb-2">Arquitectura completa del Data Warehouse del proyecto <strong>CASHFLOW RENDIMIENTO / AGRUCAPERS</strong>: pipeline SAP B1 → Stage SQL → DWH dimensional → Power BI.</p>
+      <p class="text-sm opacity-70 max-w-3xl">Carga diaria · ETL en SQL Server · 31 tablas · 111 medidas DAX · 62 relaciones · compatibilidad CL1600.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10 max-w-4xl">
+        <div class="bg-white/8 border border-white/15 rounded-lg p-5">
+          <div class="text-[10px] uppercase tracking-widest opacity-70 mb-2">Tablas modelo</div>
+          <div class="text-xl font-semibold">31 (Fact + Dim)</div>
+        </div>
+        <div class="bg-white/8 border border-white/15 rounded-lg p-5">
+          <div class="text-[10px] uppercase tracking-widest opacity-70 mb-2">Medidas DAX</div>
+          <div class="text-xl font-semibold">111 medidas</div>
+        </div>
+        <div class="bg-white/8 border border-white/15 rounded-lg p-5">
+          <div class="text-[10px] uppercase tracking-widest opacity-70 mb-2">Relaciones</div>
+          <div class="text-xl font-semibold">62 (1 activa por hecho)</div>
+        </div>
+        <div class="bg-white/8 border border-white/15 rounded-lg p-5">
+          <div class="text-[10px] uppercase tracking-widest opacity-70 mb-2">Catálogo SAP stage</div>
+          <div class="text-xl font-semibold">106 tablas</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTEXTO -->
+    <section id="contexto" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Contexto del proyecto</h2>
+      <p class="text-slate-500 mb-8">Origen del modelo, alcance funcional y parámetros operativos confirmados.</p>
+
+      <div class="grid md:grid-cols-2 gap-5 mb-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-soft border-t-4 border-t-brand-600">
+          <h3 class="text-brand-600 font-semibold text-lg mb-2">Origen</h3>
+          <p class="text-sm text-slate-700">Informe Power BI <span class="inline-code">Estructura_AGRU_PRUEBA_v3</span> conectado a un Data Warehouse en SQL Server alimentado desde <strong>SAP Business One</strong>.</p>
+          <ul class="list-disc pl-5 mt-3 text-sm text-slate-700 space-y-1">
+            <li>Modelo semántico Power BI Desktop (compatibilidad <strong>1600</strong>).</li>
+            <li>Scripts ETL: <span class="inline-code">SAP_STGA1F.sql</span>, <span class="inline-code">table_list_24_04_26.sql</span>.</li>
+            <li>Instrucciones de mantenimiento: <span class="inline-code">INSTRUCCIONES_TABLELIST_UPDATE_INSERT.txt</span>.</li>
+          </ul>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-soft border-t-4 border-t-accent-500">
+          <h3 class="text-accent-600 font-semibold text-lg mb-2">Parámetros operativos</h3>
+          <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
+            <li><strong>Frecuencia:</strong> ciclo completo diario (SAP → stage → DWH → refresh PBI).</li>
+            <li><strong>Herramienta ETL:</strong> SQL Server (tablas + procedimientos almacenados). No se usa SSIS/ADF.</li>
+            <li><strong>Multi-empresa:</strong> stage particionado por <span class="inline-code">CodEmpresa</span> en bases <span class="inline-code">SAP_STGA*F</span>.</li>
+            <li><strong>Metadatos:</strong> catálogo central en <span class="inline-code">AETL_SBOBI_v2.stage.TableList</span>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-l-4 border-brand-500 bg-brand-50 rounded-r-lg p-5 text-sm text-slate-700">
+        <div class="font-bold text-brand-600 mb-1">Alcance funcional</div>
+        Cashflow y rendimiento comercial: pipeline acumulativo <strong>Pedido → Entrega → Factura → Cobro</strong>, trazabilidad línea-a-línea, rentabilidad (coste/margen), OTIF, DSO, acuerdos globales y cobertura de stock.
+      </div>
+    </section>
+
+    <!-- ARQUITECTURA -->
+    <section id="arquitectura" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Arquitectura de datos</h2>
+      <p class="text-slate-500 mb-8">Cinco capas claramente separadas: origen, stage por empresa, metadatos ETL, transformación SQL y consumo Power BI.</p>
+
+      <div id="diagrama">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Diagrama de capas</h3>
+        <div class="mermaid">
+flowchart LR
+    subgraph SAP["Origen SAP Business One"]
+        SAP1["Bases SAP por empresa<br/>(CodEmpresa)"]
+        SAP2["Tablas estándar<br/>ORDR · RDR1 · OINV · OCRD · OITM..."]
+        SAP3["UDT / campos U_*<br/>@AGR_* · @IFG_*"]
+    end
+    subgraph STG["Stage SQL Server"]
+        STGDB["SAP_STGA*F<br/>(SAP_STGA1F / SAP_STGA3F)"]
+        STGTL["stage.TableList<br/>(AETL_SBOBI_v2)"]
+    end
+    subgraph ETL["Procesos ETL (SQL)"]
+        EXT["① Extracción diaria<br/>procedimientos + TableList"]
+        TRN["② Transformación SQL<br/>staging → Fact/Dim"]
+        LD["③ Carga DWH<br/>procedimientos almacenados"]
+    end
+    subgraph DWH["Data Warehouse"]
+        FACT["Tablas Fact_*<br/>granularidad documento/línea"]
+        DIM["Tablas Dim_*<br/>cliente · producto · fecha · vendedor · sucursal"]
+        SNAP["Fact_AccumSnapshot_Pedidos<br/>pipeline acumulativo"]
+    end
+    subgraph BI["Power BI"]
+        PBI["Estructura_AGRU_PRUEBA_v3<br/>Modelo tabular CL1600"]
+    end
+    SAP1 --> EXT
+    SAP2 --> EXT
+    SAP3 --> EXT
+    STGTL -.->|metadatos| EXT
+    EXT --> STGDB
+    STGDB --> TRN
+    TRN --> LD
+    LD --> FACT
+    LD --> DIM
+    LD --> SNAP
+    FACT --> PBI
+    DIM --> PBI
+    SNAP --> PBI
+        </div>
+      </div>
+
+      <div id="capas" class="mt-12">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Responsabilidades por capa</h3>
+        <div class="prose-table overflow-x-auto"><table>
+          <thead><tr><th>Capa</th><th>Componente</th><th>Descripción</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Origen</strong></td><td><span class="inline-code">SAP B1</span></td><td>ERP operacional: documentos venta/compra, maestros (clientes, artículos, almacenes) y tablas de usuario.</td></tr>
+            <tr><td><strong>Stage por empresa</strong></td><td><span class="inline-code">SAP_STGA*F.dbo.*</span></td><td>Réplica estructural por <span class="inline-code">CodEmpresa</span>. DDL ref: <span class="inline-code">SAP_STGA1F.sql</span>. ~115 tablas.</td></tr>
+            <tr><td><strong>Metadatos ETL</strong></td><td><span class="inline-code">AETL_SBOBI_v2.stage.TableList</span></td><td>Catálogo de tablas/columnas a extraer. Plantilla <span class="inline-code">CodEmpresa = -1</span>.</td></tr>
+            <tr><td><strong>Transformación / carga</strong></td><td>Procedimientos SQL</td><td>Renombres, claves compuestas, flags de pipeline, márgenes — entre stage y tablas analíticas.</td></tr>
+            <tr><td><strong>DWH / Dataset</strong></td><td><span class="inline-code">Fact_*</span> / <span class="inline-code">Dim_*</span></td><td>Modelo dimensional orientado a análisis comercial, logístico y cashflow.</td></tr>
+            <tr><td><strong>Consumo</strong></td><td>Power BI Desktop</td><td>Informe <span class="inline-code">Estructura_AGRU_PRUEBA_v3</span>: 31 tablas, 111 medidas, 62 relaciones, CL1600.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div id="stack" class="mt-12">
+        <h3 class="text-xl font-semibold text-brand-500 mb-4">Stack tecnológico</h3>
+        <div class="flex flex-col gap-1">
+          <div class="bg-white border-l-4 border-brand-600 rounded-md shadow-soft px-5 py-3 flex justify-between items-center text-sm"><span class="font-semibold text-brand-600">Origen</span><span class="font-mono text-xs text-slate-500">SAP Business One</span></div>
+          <div class="bg-white border-l-4 border-brand-500 rounded-md shadow-soft px-5 py-3 flex justify-between items-center text-sm"><span class="font-semibold text-brand-600">Stage</span><span class="font-mono text-xs text-slate-500">SQL Server · SAP_STGA*F</span></div>
+          <div class="bg-white border-l-4 border-accent-500 rounded-md shadow-soft px-5 py-3 flex justify-between items-center text-sm"><span class="font-semibold text-brand-600">Orquestación ETL</span><span class="font-mono text-xs text-slate-500">SQL Server stored procedures (diario)</span></div>
+          <div class="bg-white border-l-4 border-emerald-500 rounded-md shadow-soft px-5 py-3 flex justify-between items-center text-sm"><span class="font-semibold text-brand-600">DWH analítico</span><span class="font-mono text-xs text-slate-500">SQL Server · esquema Kimball</span></div>
+          <div class="bg-white border-l-4 border-violet-500 rounded-md shadow-soft px-5 py-3 flex justify-between items-center text-sm"><span class="font-semibold text-brand-600">Modelo semántico</span><span class="font-mono text-xs text-slate-500">Power BI Desktop · CL1600</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODELO -->
+    <section id="modelo" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Modelo de datos</h2>
+      <p class="text-slate-500 mb-8">Enfoque dimensional <strong>Kimball</strong> con hechos transaccionales por línea de documento y un hecho <strong>Accumulating Snapshot</strong> a nivel de pedido.</p>
+
+      <div class="grid md:grid-cols-2 gap-5 mb-10">
+        <div class="bg-gradient-to-b from-blue-50 to-white border border-slate-200 rounded-xl p-6 shadow-soft">
+          <div class="text-xs uppercase tracking-wider font-bold text-blue-700 mb-2">Hechos transaccionales</div>
+          <p class="text-sm text-slate-700">Una fila por línea de documento SAP. Trazabilidad mediante claves compuestas <span class="inline-code">Pedido_Line_Key</span>, <span class="inline-code">Albaran_Line_Key</span> y campos <span class="inline-code">DocOrigen_*</span> / <span class="inline-code">BaseEntry</span>.</p>
+        </div>
+        <div class="bg-gradient-to-b from-emerald-50 to-white border border-slate-200 rounded-xl p-6 shadow-soft">
+          <div class="text-xs uppercase tracking-wider font-bold text-emerald-700 mb-2">Accumulating Snapshot</div>
+          <p class="text-sm text-slate-700">Una fila por pedido (cabecera) con todos los hitos del ciclo de vida: pedido, entrega, factura y cobro. Soporta KPIs de pipeline, lead times y DSO.</p>
+        </div>
+      </div>
+
+      <div id="hechos">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Tablas de hechos por documento SAP</h3>
+        <div class="prose-table overflow-x-auto"><table>
+          <thead><tr><th>Tabla Power BI</th><th>Granularidad</th><th>Origen SAP</th><th class="text-center">ObjType</th></tr></thead>
+          <tbody>
+            <tr><td><span class="inline-code">Fact_Pedidos_Lineas</span></td><td>1 fila / línea pedido</td><td>ORDR + RDR1</td><td class="text-center">17</td></tr>
+            <tr><td><span class="inline-code">Fact_Albaranes_Lineas</span></td><td>1 fila / línea albarán</td><td>ODLN + DLN1</td><td class="text-center">15</td></tr>
+            <tr><td><span class="inline-code">Fact_Facturas_Lineas</span></td><td>1 fila / línea factura</td><td>OINV + INV1</td><td class="text-center">13</td></tr>
+            <tr><td><span class="inline-code">Fact_Ofertas_Lineas</span></td><td>1 fila / línea oferta</td><td>OQUT + QUT1</td><td class="text-center">23</td></tr>
+            <tr><td><span class="inline-code">Fact_AcuerdosGlobales_Lineas</span></td><td>1 fila / línea acuerdo</td><td>OOAT + OAT1</td><td class="text-center">—</td></tr>
+            <tr><td><span class="inline-code">Fact_Devoluciones_Lineas</span></td><td>1 fila / línea devolución</td><td>ORDN + RDN1</td><td class="text-center">16</td></tr>
+            <tr><td><span class="inline-code">Fact_Abonos_Lineas</span></td><td>1 fila / línea abono</td><td>ORIN + RIN1</td><td class="text-center">14</td></tr>
+            <tr><td><span class="inline-code">Fact_Solicitudes_Devolucion_Lineas</span></td><td>1 fila / línea solicitud</td><td>ORRR + RRR1</td><td class="text-center">—</td></tr>
+            <tr><td><span class="inline-code">Fact_PedidosCompra_Lineas</span></td><td>1 fila / línea pedido compra</td><td>OPOR + POR1</td><td class="text-center">22</td></tr>
+            <tr><td><span class="inline-code">Fact_Inventario_Almacen</span></td><td>1 fila / artículo-almacén</td><td>OITW + OITM</td><td class="text-center">—</td></tr>
+            <tr class="bg-amber-50/50"><td><strong><span class="inline-code">Fact_AccumSnapshot_Pedidos</span></strong></td><td><strong>1 fila / pedido (cabecera)</strong></td><td>Derivado ORDR + hitos</td><td class="text-center">17</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div id="dimensiones" class="mt-12">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Tablas de dimensiones</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Dim_Cliente</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">OCRD</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">CardCode</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>CardCode (único)</li><li>CardName / Nombre</li><li>GroupCode (grupo)</li><li>Phone1, E_Mail</li><li>Ciudad / Pais / CP</li><li>DefaultSlpCode</li></ul>
+    </div><div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Dim_Vendedor</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">OSLP</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">SlpCode</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>SlpCode (único)</li><li>SlpName</li><li>Memo (notas)</li><li>Active (Y/N)</li></ul>
+    </div><div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Dim_Producto</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">OITM</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">ItemCode</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>ItemCode (único)</li><li>ItemName</li><li>GrupoArticulo (OITB)</li><li>TipoArticulo</li><li>EsInventariable / EsVendible</li><li>PrecioMedio</li><li>StockActual / Comprometido</li><li>Atributos U_AGR_*</li></ul>
+    </div><div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Dim_Fecha</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">Calendario</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">Date</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>Date</li><li>Año, Trimestre, Mes</li><li>AñoMes, AñoMesTexto</li><li>Semana, DiaSemana, DiaMes</li><li>EsFinDeSemana</li><li>Jerarquía: Año → Mes → DiaMes</li></ul>
+    </div><div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Dim_Sucursal</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">OBPL</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">Id_Sucursal</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>Id_Sucursal (BPLId)</li><li>Nombre_Sucursal (BPLName)</li></ul>
+    </div><div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft hover:shadow-card transition">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-brand-600">Tabla_Filtro_Cobertura</h4>
+        <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">(desconectada)</span>
+      </div>
+      <div class="text-xs text-slate-500 mb-2">PK: <span class="inline-code">Etiqueta</span></div>
+      <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5"><li>Sin pendiente</li><li>Stock suficiente</li><li>Stock insuficiente</li><li>Usada en medida 'Filtrar por Cobertura'</li></ul>
+    </div>
+        </div>
+      </div>
+
+      <div id="snapshot" class="mt-12">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Fact_AccumSnapshot_Pedidos — pipeline</h3>
+        <p class="text-sm text-slate-600 mb-4">Hecho clave para el análisis cashflow. Una fila por pedido con todos los hitos y duraciones del ciclo.</p>
+        <div class="mermaid">
+flowchart LR
+    A[Pedido<br/>ORDR] -->|Dias_Pedido_a_Entrega| B[Entrega<br/>ODLN]
+    B -->|Dias_Entrega_a_Factura| C[Factura<br/>OINV]
+    C -->|Dias_Factura_a_Cobro<br/>DSO| D[Cobro<br/>ORCT]
+    A -. Flag_Entregado .-> B
+    B -. Flag_Facturado .-> C
+    C -. Flag_Cobrado .-> D
+        </div>
+        <div class="grid md:grid-cols-2 gap-5 mt-5">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-2 text-sm uppercase tracking-wide">Importes y volumen</h4>
+            <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5">
+              <li><span class="inline-code">Importe_Pedido</span>, <span class="inline-code">Importe_Facturado</span>, <span class="inline-code">Importe_Cobrado</span></li>
+              <li><span class="inline-code">Num_Entregas</span>, <span class="inline-code">Num_Facturas</span></li>
+              <li><span class="inline-code">Etapa_Actual</span>: 1-Pedido → 2-Entregado → 3-Facturado → 4-Cobrado</li>
+              <li><span class="inline-code">Cancelado</span> (Y/N), <span class="inline-code">Estado_Pedido</span></li>
+            </ul>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-2 text-sm uppercase tracking-wide">Lead times y hitos</h4>
+            <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5">
+              <li><span class="inline-code">Dias_Pedido_a_Entrega</span>, <span class="inline-code">Dias_Entrega_a_Factura</span></li>
+              <li><span class="inline-code">Dias_Factura_a_Cobro</span> (DSO), <span class="inline-code">Dias_Ciclo_Acumulado</span></li>
+              <li><span class="inline-code">Dias_Retraso_Entrega</span> vs fecha solicitada</li>
+              <li>Flags binarios: <span class="inline-code">Flag_Entregado</span>, <span class="inline-code">Flag_Facturado</span>, <span class="inline-code">Flag_Cobrado</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="relaciones" class="mt-12">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Relaciones del modelo (62 totales)</h3>
+        <p class="text-sm text-slate-600 mb-4">Patrón general: <strong>Many</strong> (hecho) → <strong>One</strong> (dimensión), filtro <strong>unidireccional</strong>. Role-playing de <span class="inline-code">Dim_Fecha</span> con relaciones inactivas activadas vía <span class="inline-code">USERELATIONSHIP</span>.</p>
+
+        <div class="accordion space-y-2">
+          <div class="accordion-item open bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+              Relaciones activas principales — snapshot
+              <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+            </div>
+            <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+              <div class="prose-table overflow-x-auto pt-3"><table>
+                <thead><tr><th>Relación</th><th>Desde</th><th>Hacia</th><th>Card.</th><th>Activa</th><th>Uso</th></tr></thead>
+                <tbody>
+                  <tr><td>Fact_FechaEntrega_Dim_Fecha</td><td>AccumSnapshot[Fecha_Entrega]</td><td>Dim_Fecha[Date]</td><td>M:1</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td><td>Fecha principal snapshot</td></tr>
+                  <tr><td>Fact_FechaFactura_Dim_Fecha</td><td>Fecha_Factura</td><td>Dim_Fecha</td><td>M:1</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td><td>USERELATIONSHIP DAX</td></tr>
+                  <tr><td>Fact_FechaCobro_Dim_Fecha</td><td>Fecha_Cobro</td><td>Dim_Fecha</td><td>M:1</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td><td>USERELATIONSHIP DAX</td></tr>
+                  <tr><td>Fact_CardCode_Dim_Cliente</td><td>CardCode</td><td>Dim_Cliente</td><td>M:1</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td><td>Cliente</td></tr>
+                  <tr><td>Fact_SlpCode_Dim_Vendedor</td><td>SlpCode</td><td>Dim_Vendedor</td><td>M:1</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td><td>Vendedor</td></tr>
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+              Catálogo completo de relaciones (62)
+              <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+            </div>
+            <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+              <div class="prose-table overflow-x-auto pt-3"><table>
+  <thead><tr><th class="text-center">#</th><th>Nombre</th><th>Desde</th><th>Columna</th><th>Hacia</th><th>Columna</th><th>Activa</th></tr></thead>
+  <tbody><tr><td class='text-center text-xs font-mono'>1</td><td class='text-xs'>Fact_FechaEntrega_Dim_Fecha</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>Fecha_Entrega</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>2</td><td class='text-xs'>Fact_FechaFactura_Dim_Fecha</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>Fecha_Factura</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td></tr><tr><td class='text-center text-xs font-mono'>3</td><td class='text-xs'>Fact_FechaCobro_Dim_Fecha</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>Fecha_Cobro</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td></tr><tr><td class='text-center text-xs font-mono'>4</td><td class='text-xs'>Fact_CardCode_Dim_Cliente</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>5</td><td class='text-xs'>Fact_SlpCode_Dim_Vendedor</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>6</td><td class='text-xs'>FPL_CardCode_DimCliente</td><td class='text-xs'>Fact_Pedidos_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td></tr><tr><td class='text-center text-xs font-mono'>7</td><td class='text-xs'>FPL_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Pedidos_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td></tr><tr><td class='text-center text-xs font-mono'>8</td><td class='text-xs'>FPL_FechaPedido_DimFecha</td><td class='text-xs'>Fact_Pedidos_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Pedido</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">No</span></td></tr><tr><td class='text-center text-xs font-mono'>9</td><td class='text-xs'>FAL_CardCode_DimCliente</td><td class='text-xs'>Fact_Albaranes_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>10</td><td class='text-xs'>FAL_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Albaranes_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>11</td><td class='text-xs'>FAL_FechaAlbaran_DimFecha</td><td class='text-xs'>Fact_Albaranes_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Albaran</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>12</td><td class='text-xs'>FPL_ItemCode_DimProducto</td><td class='text-xs'>Fact_Pedidos_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>13</td><td class='text-xs'>FAL_ItemCode_DimProducto</td><td class='text-xs'>Fact_Albaranes_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>14</td><td class='text-xs'>FFL_CardCode_DimCliente</td><td class='text-xs'>Fact_Facturas_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>15</td><td class='text-xs'>FFL_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Facturas_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>16</td><td class='text-xs'>FFL_ItemCode_DimProducto</td><td class='text-xs'>Fact_Facturas_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>17</td><td class='text-xs'>FFL_FechaFactura_DimFecha</td><td class='text-xs'>Fact_Facturas_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Factura</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>18</td><td class='text-xs'>FOL_CardCode_DimCliente</td><td class='text-xs'>Fact_Ofertas_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>19</td><td class='text-xs'>FOL_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Ofertas_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>20</td><td class='text-xs'>FOL_ItemCode_DimProducto</td><td class='text-xs'>Fact_Ofertas_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>21</td><td class='text-xs'>FOL_FechaOferta_DimFecha</td><td class='text-xs'>Fact_Ofertas_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Oferta</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>22</td><td class='text-xs'>FAG_CardCode_DimCliente</td><td class='text-xs'>Fact_AcuerdosGlobales_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>23</td><td class='text-xs'>FAG_ItemCode_DimProducto</td><td class='text-xs'>Fact_AcuerdosGlobales_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>24</td><td class='text-xs'>FAG_FechaInicio_DimFecha</td><td class='text-xs'>Fact_AcuerdosGlobales_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Inicio</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>25</td><td class='text-xs'>FDV_CardCode_DimCliente</td><td class='text-xs'>Fact_Devoluciones_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>26</td><td class='text-xs'>FDV_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Devoluciones_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>27</td><td class='text-xs'>FDV_ItemCode_DimProducto</td><td class='text-xs'>Fact_Devoluciones_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>28</td><td class='text-xs'>FDV_FechaDevolucion_DimFecha</td><td class='text-xs'>Fact_Devoluciones_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Devolucion</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>29</td><td class='text-xs'>FAB_CardCode_DimCliente</td><td class='text-xs'>Fact_Abonos_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>30</td><td class='text-xs'>FAB_SlpCode_DimVendedor</td><td class='text-xs'>Fact_Abonos_Lineas</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td class='text-xs'>Dim_Vendedor</td><td class='text-xs font-mono text-slate-600'>SlpCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>31</td><td class='text-xs'>FAB_ItemCode_DimProducto</td><td class='text-xs'>Fact_Abonos_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>32</td><td class='text-xs'>FAB_FechaAbono_DimFecha</td><td class='text-xs'>Fact_Abonos_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Abono</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>33</td><td class='text-xs'>FPC_CardProv_DimCliente</td><td class='text-xs'>Fact_PedidosCompra_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode_Proveedor</td><td class='text-xs'>Dim_Cliente</td><td class='text-xs font-mono text-slate-600'>CardCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>34</td><td class='text-xs'>FPC_ItemCode_DimProducto</td><td class='text-xs'>Fact_PedidosCompra_Lineas</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>35</td><td class='text-xs'>FPC_FechaPedidoCompra_DimFecha</td><td class='text-xs'>Fact_PedidosCompra_Lineas</td><td class='text-xs font-mono text-slate-600'>Fecha_Pedido_Compra</td><td class='text-xs'>Dim_Fecha</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>36</td><td class='text-xs'>FINV_ItemCode_DimProducto</td><td class='text-xs'>Fact_Inventario_Almacen</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td class='text-xs'>Dim_Producto</td><td class='text-xs font-mono text-slate-600'>ItemCode</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>37–41</td><td class='text-xs'>DimSucursal_*</td><td class='text-xs'>Varios hechos</td><td class='text-xs font-mono text-slate-600'>Id_Sucursal</td><td class='text-xs'>Dim_Sucursal</td><td class='text-xs font-mono text-slate-600'>Id_Sucursal</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>42–45</td><td class='text-xs'>FSDL_*</td><td class='text-xs'>Fact_Solicitudes_Devolucion_Lineas</td><td class='text-xs font-mono text-slate-600'>CardCode/SlpCode/ItemCode/Fecha</td><td class='text-xs'>Dim_*</td><td class='text-xs font-mono text-slate-600'>—</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>46–61</td><td class='text-xs'>LocalDateTable_*</td><td class='text-xs'>Fechas secundarias</td><td class='text-xs font-mono text-slate-600'>varias</td><td class='text-xs'>LocalDateTable_*</td><td class='text-xs font-mono text-slate-600'>Date</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr><tr><td class='text-center text-xs font-mono'>62</td><td class='text-xs'>bcddb2ac-…</td><td class='text-xs'>Fact_Pedidos_Lineas</td><td class='text-xs font-mono text-slate-600'>DocEntry</td><td class='text-xs'>Fact_AccumSnapshot_Pedidos</td><td class='text-xs font-mono text-slate-600'>DocEntry</td><td><span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-semibold">Sí</span></td></tr></tbody>
+</table></div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+              Claves de unión y trazabilidad
+              <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+            </div>
+            <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+              <ul class="pt-3 text-sm text-slate-700 space-y-2 list-disc pl-5">
+                <li><strong>Cliente / vendedor / producto:</strong> códigos SAP <span class="inline-code">CardCode</span>, <span class="inline-code">SlpCode</span>, <span class="inline-code">ItemCode</span>.</li>
+                <li><strong>Sucursal:</strong> <span class="inline-code">Id_Sucursal</span> ← <span class="inline-code">BPLId</span> en cabeceras de documento.</li>
+                <li><strong>Fechas:</strong> columnas datetime normalizadas en hechos → <span class="inline-code">Dim_Fecha[Date]</span>.</li>
+                <li><strong>Trazabilidad línea:</strong> <span class="inline-code">Pedido_Line_Key</span> = <code>FORMAT(DocEntry,"0") &amp; "_" &amp; FORMAT(LineNum,"0")</code> enlaza RDR1 → DLN1 → INV1.</li>
+                <li><strong>Acuerdos globales:</strong> <span class="inline-code">Acuerdo_Line_Key</span> ↔ <span class="inline-code">Acuerdo_Line_Key_Ref</span> con <span class="inline-code">TREATAS</span>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATÁLOGO TABS -->
+    <section id="catalogo" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Catálogo Stage — TableList (106 tablas)</h2>
+      <p class="text-slate-500 mb-8">Catálogo central de tablas SAP extraídas a la capa stage. <span class="inline-code">SourceColumns</span> = <span class="inline-code">DestinationColumns</span>, plantilla con <span class="inline-code">CodEmpresa = -1</span>, <span class="inline-code">CompleteLoad = 1</span>.</p>
+
+      <div class="tabs">
+        <div class="tab-buttons flex flex-wrap gap-1 border-b-2 border-slate-200 mb-6">
+          <button class="tab-btn active px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t1">Maestros</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t2">Ventas — cabeceras</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t3">Ventas — líneas</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t4">Compras</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t5">Finanzas / cobros</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t6">Inventario / costes</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t7">Producción</button>
+          <button class="tab-btn px-4 py-2 text-sm font-semibold text-slate-500 border-b-[3px] border-transparent -mb-[2px] hover:text-brand-500" data-tab="t8">UDT AGR</button>
+        </div>
+
+        <div class="tab-content active" data-tab="t1">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Nº col.</th><th>Columnas (resumen)</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">OBPL</span></td><td>4</td><td>CodEmpresa, BPLId, BPLName, Disabled</td></tr>
+              <tr><td><span class="inline-code">OCRD</span></td><td>52</td><td>CardCode, CardName, GroupCode, SlpCode, …, CntctPrsn</td></tr>
+              <tr><td><span class="inline-code">OITM</span></td><td>68</td><td>ItemCode, ItemName, U_AGR_*, OnHand, validFor</td></tr>
+              <tr><td><span class="inline-code">OSLP</span></td><td>16</td><td>SlpCode, SlpName, Memo, Commission, Active, Email</td></tr>
+              <tr><td><span class="inline-code">OITW</span></td><td>6</td><td>ItemCode, WhsCode, OnHand, IsCommited, OnOrder, updateDate</td></tr>
+              <tr><td><span class="inline-code">OITB</span></td><td>68</td><td>Grupos de artículos y cuentas contables</td></tr>
+              <tr><td><span class="inline-code">OWHS</span></td><td>3</td><td>WhsCode, WhsName, Location</td></tr>
+              <tr><td><span class="inline-code">OCRG</span></td><td>9</td><td>Grupos de socios de negocio</td></tr>
+              <tr><td><span class="inline-code">OCRY / OCST</span></td><td>—</td><td>País y provincias</td></tr>
+              <tr><td><span class="inline-code">OCTG</span></td><td>—</td><td>Condiciones de pago</td></tr>
+              <tr><td><span class="inline-code">OUGP / UGP1 / OUOM</span></td><td>—</td><td>Unidades de medida</td></tr>
+              <tr><td><span class="inline-code">CUFD / UFD1</span></td><td>—</td><td>Campos definidos por usuario</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t2">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Documento SAP</th><th>Campos destacados</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">ORDR</span></td><td>Pedido venta</td><td>DocEntry, DocNum, CardCode, DocDate, BPLId, U_AGR_*, DocTotal, ReqDate, CreateDate</td></tr>
+              <tr><td><span class="inline-code">ODLN</span></td><td>Albarán</td><td>DocEntry, DocNum, CardCode, DocDate, BPLId, U_AGR_*</td></tr>
+              <tr><td><span class="inline-code">OINV</span></td><td>Factura</td><td>DocEntry, DocNum, DocTotal, PaidToDate, TaxDate, BPLId</td></tr>
+              <tr><td><span class="inline-code">OQUT</span></td><td>Oferta</td><td>DocEntry, DocNum, U_AGR_*</td></tr>
+              <tr><td><span class="inline-code">ORDN</span></td><td>Devolución</td><td>Similar a ORDR</td></tr>
+              <tr><td><span class="inline-code">ORIN</span></td><td>Abono / nota crédito</td><td>TaxDate, Comments, BPLId</td></tr>
+              <tr><td><span class="inline-code">ORRR</span></td><td>Solicitud devolución</td><td>U_AGR_*, Comments</td></tr>
+              <tr><td><span class="inline-code">OOAT</span></td><td>Acuerdo global</td><td>Status, BpCode, fechas, BpName</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t3">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Líneas de</th><th>Campos destacados</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">RDR1</span></td><td>Pedido</td><td>DocEntry, LineNum, Quantity, OpenQty, BaseEntry, BaseType, GrossBuyPr, GrssProfit</td></tr>
+              <tr><td><span class="inline-code">DLN1</span></td><td>Albarán</td><td>+ DiscPrcnt, Dscription, Volume, TrgetEntry</td></tr>
+              <tr><td><span class="inline-code">INV1</span></td><td>Factura</td><td>+ InvQty, Price, Currency, GrossBuyPr, GrssProfit</td></tr>
+              <tr><td><span class="inline-code">QUT1</span></td><td>Oferta</td><td>+ OcrCode, TaxCode</td></tr>
+              <tr><td><span class="inline-code">RDN1</span></td><td>Devolución</td><td>+ Dscription</td></tr>
+              <tr><td><span class="inline-code">RIN1</span></td><td>Abono</td><td>+ DiscPrcnt, InvQty, Price, Currency</td></tr>
+              <tr><td><span class="inline-code">RRR1</span></td><td>Solic. devolución</td><td>+ Dscription</td></tr>
+              <tr><td><span class="inline-code">OAT1</span></td><td>Acuerdo (líneas)</td><td>AgrNo, PlanQty, UnitPrice, UndlvQty</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t4">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Documento</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">OPOR / POR1</span></td><td>Pedido de compra</td></tr>
+              <tr><td><span class="inline-code">OPQT / PQT1</span></td><td>Oferta de compra</td></tr>
+              <tr><td><span class="inline-code">OPCH / PCH1</span></td><td>Factura compra</td></tr>
+              <tr><td><span class="inline-code">OPDN / PDN1</span></td><td>Entrada mercancía compra</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t5">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Uso</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">ORCT / RCT2</span></td><td>Cobros y aplicación a facturas</td></tr>
+              <tr><td><span class="inline-code">OBOE / BOT1</span></td><td>Efectos / letras de cambio</td></tr>
+              <tr><td><span class="inline-code">INV6 / RIN6</span></td><td>Vencimientos de factura/abono</td></tr>
+              <tr><td><span class="inline-code">OJDT / JDT1</span></td><td>Asientos contables</td></tr>
+              <tr><td><span class="inline-code">OVPM / VPM2</span></td><td>Pagos salientes</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t6">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Uso</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">OINM</span></td><td>Movimientos de inventario</td></tr>
+              <tr><td><span class="inline-code">OITL / ITL1</span></td><td>Trazabilidad lotes</td></tr>
+              <tr><td><span class="inline-code">OBTN / OBTQ / ABTN</span></td><td>Lotes y stock por lote</td></tr>
+              <tr><td><span class="inline-code">@IFG_PMC</span></td><td>Precio medio de coste</td></tr>
+              <tr><td><span class="inline-code">@IFG_COSTESVENTA_CAB / _LIN</span></td><td>Costes de venta</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t7">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Uso</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">OWOR / WOR1 / WOR2 / WOR4</span></td><td>Órdenes de fabricación</td></tr>
+              <tr><td><span class="inline-code">OITT / ITT1</span></td><td>Estructuras de producto (BOM)</td></tr>
+              <tr><td><span class="inline-code">OIGN / IGN1 / IGE1</span></td><td>Entradas/salidas inventario</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <div class="tab-content hidden" data-tab="t8">
+          <div class="prose-table overflow-x-auto"><table>
+            <thead><tr><th>Tabla</th><th>Nº col.</th><th>Contenido</th></tr></thead>
+            <tbody>
+              <tr><td><span class="inline-code">@AGR_COMERCIALTEC</span></td><td>2</td><td>Code, Name — comercial técnico</td></tr>
+              <tr><td><span class="inline-code">@AGR_TIPOPRODUCCION</span></td><td>2</td><td>Code, Name — tipo de producción</td></tr>
+              <tr><td><span class="inline-code">@AGR_LINEAPRODUCCION</span></td><td>2</td><td>Code, Name — línea de producción</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="mt-8 border-l-4 border-accent-500 bg-amber-50 rounded-r-lg p-5 text-sm text-slate-700">
+        <div class="font-bold text-amber-700 mb-2">Tablas con actualización incremental documentada (24/04/2026)</div>
+        <p class="font-mono text-xs leading-relaxed">DLN1 · INV1 · OCRD · ODLN · OINV · OITM · OOAT · OPOR · OQUT · ORDN · ORDR · ORIN · ORRR · POR1 · QUT1 · RDN1 · RDR1 · RIN1 · RRR1 · OBPL (INSERT nuevo)</p>
+        <p class="mt-2 text-xs text-slate-600">Fuente: <span class="inline-code">INSTRUCCIONES_TABLELIST_UPDATE_INSERT.txt</span>. Detalle columna a columna en sentencias INSERT/UPDATE del directorio <span class="inline-code">AGRUCAPERS</span>.</p>
+      </div>
+    </section>
+
+    <!-- DICCIONARIO -->
+    <section id="diccionario" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Diccionario de columnas</h2>
+      <p class="text-slate-500 mb-8">Convenciones de normalización y diccionario resumido de las tablas <span class="inline-code">Fact_*</span> y <span class="inline-code">Dim_*</span>. Detalle completo en <span class="inline-code">ANEXO_DICCIONARIO_COLUMNAS.md</span>.</p>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Convenciones de normalización</h3>
+      <div class="prose-table overflow-x-auto mb-10"><table>
+        <thead><tr><th>Convención</th><th>Ejemplo SAP</th><th>Campo modelo</th></tr></thead>
+        <tbody>
+          <tr><td>Prefijo <span class="inline-code">Fecha_</span></td><td>DocDate, DocDueDate</td><td>Fecha_Pedido, Fecha_Vencimiento</td></tr>
+          <tr><td>Importes en moneda documento</td><td>LineTotal</td><td>Importe_Linea</td></tr>
+          <tr><td>Cantidades</td><td>Quantity, OpenQty</td><td>Cantidad, Cantidad_Pendiente</td></tr>
+          <tr><td>Estado línea</td><td>LineStatus O/C</td><td>Estado_Linea</td></tr>
+          <tr><td>Claves compuestas trazabilidad</td><td>DocEntry+LineNum</td><td>Pedido_Line_Key</td></tr>
+          <tr><td>Flags pipeline</td><td>Calculados ETL/DAX</td><td>Flag_Entregado, Flag_Facturado, Flag_Cobrado</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Diccionarios por tabla</h3>
+      <div class="accordion space-y-2">
+        <div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_Pedidos_Lineas (47 columnas · ORDR+RDR1)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>DocEntry</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ORDR.DocEntry</td></tr><tr><td><span class='inline-code'>LineNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>RDR1.LineNum</td></tr><tr><td><span class='inline-code'>DocNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ORDR.DocNum</td></tr><tr><td><span class='inline-code'>CardCode</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>ORDR.CardCode</td></tr><tr><td><span class='inline-code'>SlpCode</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ORDR.SlpCode</td></tr><tr><td><span class='inline-code'>Fecha_Pedido</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ORDR.DocDate</td></tr><tr><td><span class='inline-code'>Fecha_Vencimiento</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ORDR.DocDueDate</td></tr><tr><td><span class='inline-code'>Fecha_Entrega_Solicitada</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>RDR1.ShipDate</td></tr><tr><td><span class='inline-code'>ItemCode</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>RDR1.ItemCode</td></tr><tr><td><span class='inline-code'>Descripcion</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>RDR1.Dscription</td></tr><tr><td><span class='inline-code'>Cantidad</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.Quantity</td></tr><tr><td><span class='inline-code'>Cantidad_Pendiente</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.OpenQty</td></tr><tr><td><span class='inline-code'>Cantidad_Cumplida</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>Derivado entregas</td></tr><tr><td><span class='inline-code'>Importe_Linea</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.LineTotal</td></tr><tr><td><span class='inline-code'>Precio_Neto</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.Price</td></tr><tr><td><span class='inline-code'>Descuento_Pct</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.DiscPrcnt</td></tr><tr><td><span class='inline-code'>IVA_Pct / Importe_IVA</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.VatPrcnt / VatSum</td></tr><tr><td><span class='inline-code'>Precio_Coste</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>RDR1.INMPrice</td></tr><tr><td><span class='inline-code'>Margen_Bruto / Margen_Bruto_Pct</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>Calculado</td></tr><tr><td><span class='inline-code'>Almacen</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>RDR1.WhsCode</td></tr><tr><td><span class='inline-code'>Estado_Linea</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>RDR1.LineStatus O/C</td></tr><tr><td><span class='inline-code'>Estado_Pedido</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>ORDR.DocStatus</td></tr><tr><td><span class='inline-code'>Pedido_Line_Key</span></td><td class='text-xs'>String (DAX)</td><td class='text-xs text-slate-600'>FORMAT(DocEntry)&"_"&FORMAT(LineNum)</td></tr><tr><td><span class='inline-code'>Id_Sucursal / Nombre_Sucursal</span></td><td class='text-xs'>Int64/String</td><td class='text-xs text-slate-600'>ORDR.BPLId / OBPL</td></tr><tr><td><span class='inline-code'>AgrNo_Acuerdo_OOAT / AgrLnNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>RDR1</td></tr><tr><td><span class='inline-code'>Acuerdo_Line_Key_Ref</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>Enlace OOAT/OAT1</td></tr><tr><td><span class='inline-code'>DocOrigen_Entry / ObjectType</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>RDR1.BaseEntry / BaseType</td></tr></tbody>
+        </table></div>
+      </div>
+    </div><div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_Albaranes_Lineas (40 columnas · ODLN+DLN1)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>DocEntry / LineNum / DocNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ODLN / DLN1</td></tr><tr><td><span class='inline-code'>CardCode / SlpCode</span></td><td class='text-xs'>—</td><td class='text-xs text-slate-600'>ODLN</td></tr><tr><td><span class='inline-code'>Fecha_Albaran</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ODLN.DocDate</td></tr><tr><td><span class='inline-code'>ItemCode / Descripcion</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>DLN1</td></tr><tr><td><span class='inline-code'>Cantidad / Importe_Linea</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>DLN1</td></tr><tr><td><span class='inline-code'>Pedido_DocEntry / Pedido_LineNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>DLN1.BaseEntry/BaseLine (17)</td></tr><tr><td><span class='inline-code'>Albaran_Line_Key (DAX)</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>DocEntry_LineNum</td></tr><tr><td><span class='inline-code'>Pedido_Line_Key (DAX)</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>desde Pedido_DocEntry+LineNum</td></tr><tr><td><span class='inline-code'>Peso_Line_Kg / Volumen_Line</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>DLN1.Weight1 / Volume</td></tr><tr><td><span class='inline-code'>Fecha_Carga_Line</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>DLN1.ShipDate</td></tr><tr><td><span class='inline-code'>Id_Sucursal / Nombre_Sucursal</span></td><td class='text-xs'>—</td><td class='text-xs text-slate-600'>ODLN.BPLId / OBPL</td></tr></tbody>
+        </table></div>
+      </div>
+    </div><div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_Facturas_Lineas (43 columnas · OINV+INV1)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>DocEntry / LineNum / DocNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>OINV / INV1</td></tr><tr><td><span class='inline-code'>Fecha_Factura</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>OINV.DocDate</td></tr><tr><td><span class='inline-code'>Fecha_Vencimiento_Pago</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>OINV.DocDueDate</td></tr><tr><td><span class='inline-code'>Fecha_Devengo</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>OINV.TaxDate</td></tr><tr><td><span class='inline-code'>Albaran_DocEntry / LineNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>INV1.BaseEntry/BaseLine (15)</td></tr><tr><td><span class='inline-code'>Cantidad_Devuelta</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>Agregado devoluciones</td></tr><tr><td><span class='inline-code'>Importe_Pagado</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OINV.PaidToDate (prorrateo)</td></tr><tr><td><span class='inline-code'>Importe_Pendiente_Cobro</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>Calculado</td></tr><tr><td><span class='inline-code'>Estado_Factura</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OINV.DocStatus</td></tr><tr><td><span class='inline-code'>Factura_Line_Key (DAX)</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>DocEntry_LineNum</td></tr><tr><td><span class='inline-code'>Pedido_Line_Key / Albaran_Line_Key (DAX)</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>Según BaseType</td></tr></tbody>
+        </table></div>
+      </div>
+    </div><div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_AccumSnapshot_Pedidos (29 columnas · 1 fila/pedido)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>DocEntry / DocNum</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ORDR (PK)</td></tr><tr><td><span class='inline-code'>CardCode / CardName</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>ORDR / OCRD</td></tr><tr><td><span class='inline-code'>SlpCode</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>ORDR.SlpCode</td></tr><tr><td><span class='inline-code'>Fecha_Pedido / Fecha_Creacion</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ORDR.DocDate / CreateDate</td></tr><tr><td><span class='inline-code'>Fecha_VencimientoPedido / Fecha_EntregaSolicitada</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ORDR.DocDueDate / ReqDate</td></tr><tr><td><span class='inline-code'>Fecha_Entrega</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>MIN(ODLN.DocDate)</td></tr><tr><td><span class='inline-code'>Fecha_Factura</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>MIN(OINV.DocDate)</td></tr><tr><td><span class='inline-code'>Fecha_Cobro</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>ORCT / pagos</td></tr><tr><td><span class='inline-code'>Importe_Pedido / Facturado / Cobrado</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>ORDR / OINV / ORCT</td></tr><tr><td><span class='inline-code'>Moneda</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>ORDR.DocCur</td></tr><tr><td><span class='inline-code'>Estado_Pedido / Cancelado</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>ORDR.DocStatus / CANCELED</td></tr><tr><td><span class='inline-code'>Num_Entregas / Num_Facturas</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>Conteos</td></tr><tr><td><span class='inline-code'>Etapa_Actual</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>1-Pedido … 4-Cobrado (SQL/DAX)</td></tr><tr><td><span class='inline-code'>Dias_Pedido_a_Entrega / Entrega_a_Factura / Factura_a_Cobro</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>DATEDIFF</td></tr><tr><td><span class='inline-code'>Dias_Ciclo_Acumulado / Dias_Retraso_Entrega</span></td><td class='text-xs'>Int64</td><td class='text-xs text-slate-600'>Derivados</td></tr><tr><td><span class='inline-code'>Flag_Entregado / Flag_Facturado / Flag_Cobrado</span></td><td class='text-xs'>Int</td><td class='text-xs text-slate-600'>Hitos binarios</td></tr></tbody>
+        </table></div>
+      </div>
+    </div><div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_AcuerdosGlobales_Lineas (16 columnas · OOAT+OAT1)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>Acuerdo_Line_Key</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>AgrNo + AgrLnNum</td></tr><tr><td><span class='inline-code'>Numero_Acuerdo</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OOAT</td></tr><tr><td><span class='inline-code'>CardCode</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OOAT.BpCode</td></tr><tr><td><span class='inline-code'>Fecha_Inicio / Fecha_Fin</span></td><td class='text-xs'>DateTime</td><td class='text-xs text-slate-600'>OOAT</td></tr><tr><td><span class='inline-code'>Estado_Acuerdo</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OOAT.Status</td></tr><tr><td><span class='inline-code'>ItemCode / Descripcion_Articulo</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OAT1</td></tr><tr><td><span class='inline-code'>Cantidad_Acuerdo (PlanQty)</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OAT1</td></tr><tr><td><span class='inline-code'>Cantidad_Abierta_BA (UndlvQty)</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OAT1</td></tr><tr><td><span class='inline-code'>Precio (UnitPrice)</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OAT1</td></tr><tr><td><span class='inline-code'>Importe_Line</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OAT1</td></tr><tr><td><span class='inline-code'>importe_linea (DAX)</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>Cantidad × Precio</td></tr></tbody>
+        </table></div>
+      </div>
+    </div><div class="accordion-item bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="accordion-header cursor-pointer flex justify-between items-center px-5 py-3 font-semibold text-brand-600 hover:bg-slate-50">
+        Fact_Inventario_Almacen (6 columnas · OITW+OITM)
+        <span class="accordion-arrow transition-transform text-slate-400">▶</span>
+      </div>
+      <div class="accordion-content max-h-0 overflow-hidden transition-[max-height] duration-300">
+        <div class="prose-table overflow-x-auto pt-3"><table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Origen / lógica</th></tr></thead>
+          <tbody><tr><td><span class='inline-code'>ItemCode</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OITW.ItemCode</td></tr><tr><td><span class='inline-code'>Almacen</span></td><td class='text-xs'>String</td><td class='text-xs text-slate-600'>OITW.WhsCode</td></tr><tr><td><span class='inline-code'>Stock_Disponible</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OITW.OnHand</td></tr><tr><td><span class='inline-code'>Stock_Comprometido</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OITW.IsCommited</td></tr><tr><td><span class='inline-code'>Stock_Pedido_Compra</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>OITW.OnOrder</td></tr><tr><td><span class='inline-code'>Stock_Neta_Servible</span></td><td class='text-xs'>Double</td><td class='text-xs text-slate-600'>SQL: OnHand − IsCommited (+ reglas)</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+      </div>
+    </section>
+
+    <!-- ETL -->
+    <section id="etl" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Procesos ETL</h2>
+      <p class="text-slate-500 mb-8">Ciclo diario completo: extracción gobernada por metadatos, stage por empresa, transformación y carga al DWH.</p>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Resumen operativo</h3>
+      <div class="grid md:grid-cols-3 gap-4 mb-10">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft border-t-4 border-t-brand-600">
+          <div class="text-xs uppercase tracking-wider text-slate-500 mb-1">Frecuencia</div>
+          <div class="text-2xl font-bold text-brand-600">Diaria</div>
+          <p class="text-xs text-slate-600 mt-2">SAP → stage → DWH → refresh PBI</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft border-t-4 border-t-emerald-500">
+          <div class="text-xs uppercase tracking-wider text-slate-500 mb-1">Herramienta</div>
+          <div class="text-2xl font-bold text-brand-600">SQL Server</div>
+          <p class="text-xs text-slate-600 mt-2">Procedimientos almacenados + tablas intermedias</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft border-t-4 border-t-accent-500">
+          <div class="text-xs uppercase tracking-wider text-slate-500 mb-1">Metadatos</div>
+          <div class="text-2xl font-bold text-brand-600">TableList</div>
+          <p class="text-xs text-slate-600 mt-2"><span class="inline-code">AETL_SBOBI_v2.stage.TableList</span></p>
+        </div>
+      </div>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Flujo de carga diario</h3>
+      <div class="mermaid">
+flowchart TB
+    S0[SAP B1<br/>por CodEmpresa] --> S1
+    S1["① Extracción SQL<br/>procedimientos leen stage.TableList<br/>SourceColumns / DestinationColumns<br/>CompleteLoad=1"] --> S2
+    S2["② Stage<br/>SAP_STGA*F.dbo.&lt;TablaSAP&gt;<br/>+ CodEmpresa<br/>DDL: SAP_STGA1F.sql"] --> S3
+    S3["③ Transformación + carga DWH<br/>join cabecera+línea · Fact_/Dim_<br/>claves Pedido_Line_Key, Albaran_Line_Key<br/>snapshot pipeline · flags hito"] --> S4
+    S4["④ Tablas analíticas<br/>Fact_* / Dim_*"] --> S5
+    S5["⑤ Power BI<br/>refresh dataset + 111 medidas DAX"]
+      </div>
+
+      <h3 id="reglas" class="text-xl font-semibold text-brand-500 mt-12 mb-3">Reglas de negocio aplicadas</h3>
+      <div class="prose-table overflow-x-auto mb-10"><table>
+        <thead><tr><th>Regla</th><th>Implementación</th></tr></thead>
+        <tbody>
+          <tr><td>Exclusión pedidos cancelados</td><td><span class="inline-code">Cancelado &lt;&gt; "Y"</span> en medidas de volumen activo</td></tr>
+          <tr><td>Pipeline por hitos</td><td><span class="inline-code">Etapa_Actual</span>: 1-Pedido → 2-Entregado → 3-Facturado → 4-Cobrado</td></tr>
+          <tr><td>OTIF</td><td>Entrega con <span class="inline-code">Dias_Retraso_Entrega &lt;= 0</span></td></tr>
+          <tr><td>Trazabilidad línea</td><td><span class="inline-code">Pedido_Line_Key</span> enlaza RDR1 → DLN1 → INV1</td></tr>
+          <tr><td>ObjectType estándar B1</td><td>17 pedido · 15 entrega · 13 factura · 23 oferta · 16 devolución · 14 abono · 22 pedido compra</td></tr>
+          <tr><td>Role-playing fechas</td><td>Relaciones inactivas + <span class="inline-code">USERELATIONSHIP</span> en medidas snapshot</td></tr>
+          <tr><td>Acuerdos globales</td><td><span class="inline-code">TREATAS</span> entre <span class="inline-code">Acuerdo_Line_Key</span> y <span class="inline-code">Acuerdo_Line_Key_Ref</span></td></tr>
+          <tr><td>Stock servible</td><td><span class="inline-code">OITW.OnHand − IsCommited</span> → <span class="inline-code">Stock_Neta_Servible</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Parámetros TableList</h3>
+      <div class="prose-table overflow-x-auto mb-10"><table>
+        <thead><tr><th>Parámetro</th><th>Valor en plantilla</th><th>Interpretación</th></tr></thead>
+        <tbody>
+          <tr><td><span class="inline-code">CompleteLoad</span></td><td><span class="inline-code">1</span></td><td>Carga completa de la tabla en cada ejecución diaria</td></tr>
+          <tr><td><span class="inline-code">MonthsBack</span></td><td><span class="inline-code">NULL</span></td><td>Sin ventana incremental por metadatos; filtro temporal en procedimientos SQL</td></tr>
+          <tr><td><span class="inline-code">DateSourceField / DateDestinationField</span></td><td><span class="inline-code">NULL</span> (en mayoría)</td><td>Incremental por fecha no declarado en TableList para esas tablas</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Orden de ejecución recomendado</h3>
+      <ol class="space-y-3 mb-10">
+        <li class="flex gap-4"><span class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">1</span><div class="text-sm text-slate-700"><strong>Maestros:</strong> OBPL, OCRD, OITM, OSLP, OITW, UDT <span class="inline-code">@AGR_*</span></div></li>
+        <li class="flex gap-4"><span class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">2</span><div class="text-sm text-slate-700"><strong>Documentos venta/compra:</strong> cabeceras antes que líneas (ORDR→RDR1, ODLN→DLN1, …)</div></li>
+        <li class="flex gap-4"><span class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">3</span><div class="text-sm text-slate-700"><strong>Finanzas:</strong> OINV, ORCT, INV6 (cobros y vencimientos)</div></li>
+        <li class="flex gap-4"><span class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">4</span><div class="text-sm text-slate-700"><strong>Snapshot:</strong> construcción de <span class="inline-code">Fact_AccumSnapshot_Pedidos</span> tras hechos de pedido, entrega, factura y cobro</div></li>
+        <li class="flex gap-4"><span class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">5</span><div class="text-sm text-slate-700"><strong>Refresh Power BI</strong> del dataset analítico</div></li>
+      </ol>
+
+      <div id="mantenimiento">
+        <h3 class="text-xl font-semibold text-brand-500 mb-3">Mantenimiento del catálogo TableList</h3>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <ol class="space-y-2 text-sm text-slate-700 list-decimal pl-5">
+              <li>Backup / transacción.</li>
+              <li><span class="inline-code">INSERT</span> si nueva tabla (ej. <span class="inline-code">OBPL</span>).</li>
+              <li><span class="inline-code">UPDATE</span> <span class="inline-code">SourceColumns</span> y <span class="inline-code">DestinationColumns</span> (mismo valor, mismo orden).</li>
+              <li>Validar <span class="inline-code">@@ROWCOUNT = 1</span> por tabla.</li>
+              <li>Verificar DDL destino antes de la siguiente ejecución ETL.</li>
+            </ol>
+          </div>
+          <div>
+            <pre class="code-block"><code><span class="c">-- Plantilla INSERT TableList (CodEmpresa = -1)</span>
+<span class="k">INSERT INTO</span> stage.TableList
+  (CodEmpresa, TableName, SourceColumns,
+   DestinationColumns, CompleteLoad)
+<span class="k">VALUES</span>
+  (-1, <span class="s">'OBPL'</span>,
+   <span class="s">'BPLId,BPLName,Disabled'</span>,
+   <span class="s">'BPLId,BPLName,Disabled'</span>,
+   1);
+
+<span class="k">IF</span> @@ROWCOUNT &lt;&gt; 1
+  <span class="k">THROW</span> 50000, <span class="s">'Insert TableList falló'</span>, 1;</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEDIDAS -->
+    <section id="medidas" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Medidas DAX (111)</h2>
+      <p class="text-slate-500 mb-8">Distribuidas en 7 tablas de hechos. Catálogo completo con expresiones DAX en <span class="inline-code">ANEXO_MEDIDAS_DAX.md</span>.</p>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-10">
+        <div class="bg-gradient-to-br from-brand-600 to-brand-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">37</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">AccumSnapshot</div>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">34</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Pedidos Líneas</div>
+        </div>
+        <div class="bg-gradient-to-br from-violet-600 to-violet-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">12</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Albaranes</div>
+        </div>
+        <div class="bg-gradient-to-br from-amber-600 to-amber-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">13</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Facturas</div>
+        </div>
+        <div class="bg-gradient-to-br from-rose-600 to-rose-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">12</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Acuerdos</div>
+        </div>
+        <div class="bg-gradient-to-br from-cyan-600 to-cyan-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">2</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Inventario</div>
+        </div>
+        <div class="bg-gradient-to-br from-slate-700 to-slate-500 text-white rounded-xl p-4 text-center shadow-card">
+          <div class="text-3xl font-extrabold leading-none">1</div>
+          <div class="text-[11px] mt-1 opacity-90 uppercase tracking-wide font-semibold">Ofertas</div>
+        </div>
+      </div>
+
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Resumen por carpeta — Fact_AccumSnapshot_Pedidos</h3>
+      <div class="prose-table overflow-x-auto mb-12"><table>
+        <thead><tr><th>Carpeta</th><th>Medida</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">Volumen</span></td><td><span class="inline-code"># Pedidos</span></td><td>Número total de pedidos</td></tr>
+          <tr><td><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">Volumen</span></td><td><span class="inline-code"># Pedidos Activos</span></td><td>Pedidos no cancelados</td></tr>
+          <tr><td><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">Volumen</span></td><td><span class="inline-code"># Entregados</span> · <span class="inline-code"># Facturados</span> · <span class="inline-code"># Cobrados</span></td><td>Hitos del pipeline</td></tr>
+          <tr><td><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-semibold">Eficacia</span></td><td><span class="inline-code">% Tasa Entrega/Facturacion/Cobro</span></td><td>Hito / activos</td></tr>
+          <tr><td><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-semibold">Eficacia</span></td><td><span class="inline-code">% OTIF</span> · <span class="inline-code"># Entregas a Tiempo</span></td><td>On Time In Full</td></tr>
+          <tr><td><span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">Importes</span></td><td><span class="inline-code">Importe Total Pedido / Facturado / Cobrado</span></td><td>Sumas absolutas</td></tr>
+          <tr><td><span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">Importes</span></td><td><span class="inline-code">Importe Pendiente Cobrar</span> · <span class="inline-code">% Conversion Factura-Cobro</span></td><td>Cashflow</td></tr>
+          <tr><td><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-xs font-semibold">Ciclo</span></td><td><span class="inline-code">Avg Dias Pedido-Entrega / Entrega-Factura / Factura-Cobro (DSO)</span></td><td>Lead times</td></tr>
+          <tr><td><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-xs font-semibold">Ciclo</span></td><td><span class="inline-code">Avg Ciclo Total</span> · <span class="inline-code">Avg Retraso Entrega</span></td><td>Calidad operativa</td></tr>
+          <tr><td><span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full text-xs font-semibold">Pipeline</span></td><td><span class="inline-code">Importe x Etapa Pedido/Entregado/Facturado/Cobrado</span></td><td>Etapa actual</td></tr>
+          <tr><td><span class="bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full text-xs font-semibold">Role-Playing</span></td><td><span class="inline-code">Importe por Fecha Entrega/Factura/Cobro</span></td><td>USERELATIONSHIP</td></tr>
+          <tr><td><span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-xs font-semibold">Acumulados</span></td><td><span class="inline-code">Importe Pedido/Cobrado Acumulado YTD</span></td><td>YTD</td></tr>
+        </tbody>
+      </table></div>
+
+      <div id="dax-ejemplos">
+        <h3 class="text-xl font-semibold text-brand-500 mb-4">Expresiones DAX representativas</h3>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1">% OTIF (On Time In Full)</h4>
+            <p class="text-xs text-slate-500 mb-2">Eficacia Pipeline · entregas a tiempo sobre el total de entregados</p>
+            <pre class="code-block"><code><span class="f">DIVIDE</span>(
+  [# Entregas a Tiempo],
+  [# Entregados],
+  0
+)</code></pre>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1"># Pedidos Activos</h4>
+            <p class="text-xs text-slate-500 mb-2">Volumen · pedidos no cancelados</p>
+            <pre class="code-block"><code><span class="f">COUNTROWS</span>(
+  <span class="f">FILTER</span>(Fact_AccumSnapshot_Pedidos,
+    Fact_AccumSnapshot_Pedidos[Cancelado] &lt;&gt; <span class="s">"Y"</span>
+  )
+)</code></pre>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1">Avg Dias Factura a Cobro (DSO)</h4>
+            <p class="text-xs text-slate-500 mb-2">Tiempos de Ciclo · DSO sobre pedidos cobrados</p>
+            <pre class="code-block"><code><span class="f">AVERAGEX</span>(
+  <span class="f">FILTER</span>(Fact_AccumSnapshot_Pedidos,
+    Fact_AccumSnapshot_Pedidos[Flag_Cobrado] = 1 &amp;&amp;
+    <span class="f">NOT</span>(<span class="f">ISBLANK</span>(Fact_AccumSnapshot_Pedidos[Dias_Factura_a_Cobro]))
+  ),
+  Fact_AccumSnapshot_Pedidos[Dias_Factura_a_Cobro]
+)</code></pre>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1">Etiqueta Estado Facturación Pedido</h4>
+            <p class="text-xs text-slate-500 mb-2">Trazabilidad · clasificación por importe pedido vs facturado</p>
+            <pre class="code-block"><code><span class="k">VAR</span> impF = <span class="f">MAX</span>(<span class="s">'Fact_AccumSnapshot_Pedidos'</span>[Importe_Facturado])
+<span class="k">VAR</span> impP = <span class="f">MAX</span>(<span class="s">'Fact_AccumSnapshot_Pedidos'</span>[Importe_Pedido])
+<span class="k">RETURN</span>
+  <span class="f">SWITCH</span>(<span class="f">TRUE</span>(),
+    <span class="f">ISBLANK</span>(impP) || impP = 0, <span class="f">BLANK</span>(),
+    <span class="f">ISBLANK</span>(impF) || impF &lt;= 0, <span class="s">"Sin facturar"</span>,
+    impF &gt;= impP - 0.01, <span class="s">"Facturado"</span>,
+    <span class="s">"Facturación parcial"</span>
+  )</code></pre>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1">Importe por Fecha Cobro (role-playing)</h4>
+            <p class="text-xs text-slate-500 mb-2">Activa relación inactiva Fecha_Cobro ↔ Dim_Fecha</p>
+            <pre class="code-block"><code><span class="f">CALCULATE</span>(
+  [Importe Total Cobrado],
+  <span class="f">USERELATIONSHIP</span>(
+    Fact_AccumSnapshot_Pedidos[Fecha_Cobro],
+    Dim_Fecha[Date]
+  )
+)</code></pre>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-soft">
+            <h4 class="font-semibold text-brand-600 mb-1">% Cumplimiento Líneas</h4>
+            <p class="text-xs text-slate-500 mb-2">Ratios · Fact_Pedidos_Lineas</p>
+            <pre class="code-block"><code><span class="f">DIVIDE</span>(
+  [Cantidad Servida Linea Pedido],
+  [Cantidad Pedida],
+  0
+)</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAPA SAP -->
+    <section id="mapa-sap" class="px-6 md:px-16 py-20 border-b border-slate-200">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Mapa SAP ↔ Hechos</h2>
+      <p class="text-slate-500 mb-8">Referencia rápida de equivalencias entre documentos SAP B1 y tablas de hechos del modelo.</p>
+      <div class="prose-table overflow-x-auto"><table>
+        <thead><tr><th class="text-center">ObjType</th><th>Tabla O*</th><th>Tabla *1</th><th>Hecho PBI</th></tr></thead>
+        <tbody>
+          <tr><td class="text-center font-bold text-brand-600">17</td><td><span class="inline-code">ORDR</span></td><td><span class="inline-code">RDR1</span></td><td><span class="inline-code">Fact_Pedidos_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">15</td><td><span class="inline-code">ODLN</span></td><td><span class="inline-code">DLN1</span></td><td><span class="inline-code">Fact_Albaranes_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">13</td><td><span class="inline-code">OINV</span></td><td><span class="inline-code">INV1</span></td><td><span class="inline-code">Fact_Facturas_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">23</td><td><span class="inline-code">OQUT</span></td><td><span class="inline-code">QUT1</span></td><td><span class="inline-code">Fact_Ofertas_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">16</td><td><span class="inline-code">ORDN</span></td><td><span class="inline-code">RDN1</span></td><td><span class="inline-code">Fact_Devoluciones_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">14</td><td><span class="inline-code">ORIN</span></td><td><span class="inline-code">RIN1</span></td><td><span class="inline-code">Fact_Abonos_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">22</td><td><span class="inline-code">OPOR</span></td><td><span class="inline-code">POR1</span></td><td><span class="inline-code">Fact_PedidosCompra_Lineas</span></td></tr>
+          <tr><td class="text-center font-bold text-brand-600">—</td><td><span class="inline-code">OOAT</span></td><td><span class="inline-code">OAT1</span></td><td><span class="inline-code">Fact_AcuerdosGlobales_Lineas</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- VALIDACIONES -->
+    <section id="validaciones" class="px-6 md:px-16 py-20">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Validaciones opcionales (no bloqueantes)</h2>
+      <p class="text-slate-500 mb-8">Aspectos a confirmar o documentar fuera del alcance estricto del modelo semántico.</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="border-l-4 border-brand-500 bg-brand-50 rounded-r-lg p-5">
+          <div class="font-bold text-brand-600 mb-1 text-sm">Modo Power BI</div>
+          <p class="text-sm text-slate-700">Confirmar si el despliegue usa <strong>Import</strong> o <strong>DirectQuery</strong> en producción.</p>
+        </div>
+        <div class="border-l-4 border-brand-500 bg-brand-50 rounded-r-lg p-5">
+          <div class="font-bold text-brand-600 mb-1 text-sm">CodEmpresa activos</div>
+          <p class="text-sm text-slate-700">Listado oficial de empresas incluidas en la carga diaria.</p>
+        </div>
+        <div class="border-l-4 border-amber-500 bg-amber-50 rounded-r-lg p-5">
+          <div class="font-bold text-amber-700 mb-1 text-sm">Nombres de procedimientos</div>
+          <p class="text-sm text-slate-700">Los scripts SQL de procs no están en el repositorio. Documentar nombres en el catálogo de jobs del DBA.</p>
+        </div>
+        <div class="border-l-4 border-rose-500 bg-rose-50 rounded-r-lg p-5">
+          <div class="font-bold text-rose-700 mb-1 text-sm">Medida con error</div>
+          <p class="text-sm text-slate-700"><span class="inline-code">importe_linea_cantxprec</span> en <span class="inline-code">Fact_AcuerdosGlobales_Lineas</span> en estado <strong>InvalidExpression</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PALETA POWER BI -->
+    <section id="paleta" class="px-6 md:px-16 py-20 border-t border-slate-200 bg-white">
+      <h2 class="text-3xl font-bold text-brand-600 mb-2">Paleta corporativa Power BI</h2>
+      <p class="text-slate-600 mb-8 max-w-3xl">Extraída del tema <span class="inline-code">tema_insight_hub_agrucapers.json</span> aplicado al modelo. Define los colores oficiales del informe y los que deberíamos reutilizar en visuales, fondos, KPIs y semáforos.</p>
+
+      <!-- Datos principales -->
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Colores de datos (dataColors)</h3>
+      <p class="text-sm text-slate-600 mb-4">Secuencia oficial que Power BI asigna a series, categorías y leyendas. Úsala en este orden para mantener coherencia entre visuales.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-10">
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#004F84"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Azul oscuro</div><code class="text-slate-500">#004F84</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#0074BD"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Corporativo</div><code class="text-slate-500">#0074BD</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#1A86C9"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Azul medio</div><code class="text-slate-500">#1A86C9</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#3D9CD9"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Azul claro</div><code class="text-slate-500">#3D9CD9</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#6BB4E8"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Cielo</div><code class="text-slate-500">#6BB4E8</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#92C8F0"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Cielo claro</div><code class="text-slate-500">#92C8F0</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#B9DCF5"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Neblina</div><code class="text-slate-500">#B9DCF5</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16 border-b border-slate-100" style="background:#E6F3FB"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Hielo</div><code class="text-slate-500">#E6F3FB</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#5A6A78"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Gris pizarra</div><code class="text-slate-500">#5A6A78</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#8B9CAB"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Gris medio</div><code class="text-slate-500">#8B9CAB</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#B0BEC5"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Gris claro</div><code class="text-slate-500">#B0BEC5</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16 border-b border-slate-100" style="background:#DDE6EC"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Gris niebla</div><code class="text-slate-500">#DDE6EC</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#3D5A73"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Acero</div><code class="text-slate-500">#3D5A73</code></div></div>
+        <div class="rounded-lg overflow-hidden border border-slate-200 shadow-soft"><div class="h-16" style="background:#607D8B"></div><div class="px-2 py-2 text-[11px]"><div class="font-semibold text-slate-800">Azul gris</div><code class="text-slate-500">#607D8B</code></div></div>
+      </div>
+
+      <!-- Semáforo y estructurales -->
+      <div class="grid md:grid-cols-2 gap-6 mb-10">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-soft">
+          <h3 class="text-lg font-semibold text-brand-600 mb-3">Semáforo (KPIs y condicionales)</h3>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#0074BD"></span><span><strong>Good</strong> <code class="text-slate-500">#0074BD</code> — cumplimiento, valores positivos</span></li>
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#E39828"></span><span><strong>Neutral / aviso</strong> <code class="text-slate-500">#E39828</code> — desviación moderada</span></li>
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#C30000"></span><span><strong>Bad</strong> <code class="text-slate-500">#C30000</code> — alerta / incumplimiento</span></li>
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#97A8A0"></span><span><strong>Null / N/D</strong> <code class="text-slate-500">#97A8A0</code></span></li>
+          </ul>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-soft">
+          <h3 class="text-lg font-semibold text-brand-600 mb-3">Escala divergente (mapas, matrices, heatmaps)</h3>
+          <div class="h-6 rounded-md mb-3" style="background: linear-gradient(90deg,#D9785B 0%, #FFFFFF 50%, #3D9CD9 100%);"></div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#D9785B"></span><span><strong>Mínimo</strong> <code class="text-slate-500">#D9785B</code></span></li>
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#0074BD"></span><span><strong>Centro</strong> <code class="text-slate-500">#0074BD</code></span></li>
+            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-md shadow-sm" style="background:#3D9CD9"></span><span><strong>Máximo</strong> <code class="text-slate-500">#3D9CD9</code></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Estructurales -->
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Tokens estructurales del informe</h3>
+      <div class="overflow-x-auto prose-table mb-10">
+        <table>
+          <thead><tr><th>Token</th><th>Valor</th><th>Uso recomendado</th></tr></thead>
+          <tbody>
+            <tr><td><strong>background</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded border border-slate-300" style="background:#F5FAFD"></span><code>#F5FAFD</code></span></td><td>Fondo de página (azul muy desaturado)</td></tr>
+            <tr><td><strong>secondaryBackground</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded border border-slate-300" style="background:#E8F1F8"></span><code>#E8F1F8</code></span></td><td>Tarjetas, paneles secundarios</td></tr>
+            <tr><td><strong>foreground</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#2C3E50"></span><code>#2C3E50</code></span></td><td>Texto principal</td></tr>
+            <tr><td><strong>firstLevelElements</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#0A2540"></span><code>#0A2540</code></span></td><td>Títulos, ejes principales</td></tr>
+            <tr><td><strong>secondLevelElements</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3D5A73"></span><code>#3D5A73</code></span></td><td>Subtítulos, ejes secundarios</td></tr>
+            <tr><td><strong>thirdLevelElements</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded border border-slate-200" style="background:#C5D9E8"></span><code>#C5D9E8</code></span></td><td>Líneas de cuadrícula, separadores suaves</td></tr>
+            <tr><td><strong>fourthLevelElements</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#6B8FA8"></span><code>#6B8FA8</code></span></td><td>Etiquetas auxiliares, tooltips</td></tr>
+            <tr><td><strong>tableAccent</strong></td><td><span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#0074BD"></span><code>#0074BD</code></span></td><td>Cabeceras y bordes de tabla / matriz</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recomendaciones de uso -->
+      <h3 class="text-xl font-semibold text-brand-500 mb-3">Recomendaciones de uso en el informe</h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white border border-slate-200 border-t-4 border-t-brand-500 rounded-xl p-6 shadow-soft">
+          <h4 class="font-semibold text-brand-600 mb-2">Jerarquía cromática</h4>
+          <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5">
+            <li><strong>#0074BD</strong> como color primario de marca (KPIs principales, totales).</li>
+            <li><strong>#004F84</strong> para encabezados y barras de navegación.</li>
+            <li><strong>#3D9CD9 / #6BB4E8</strong> para series secundarias y comparativas.</li>
+            <li>Grises (<strong>#5A6A78 → #DDE6EC</strong>) reservados para contexto, no para datos clave.</li>
+          </ul>
+        </div>
+        <div class="bg-white border border-slate-200 border-t-4 border-t-accent-500 rounded-xl p-6 shadow-soft">
+          <h4 class="font-semibold text-brand-600 mb-2">Accesibilidad y contraste</h4>
+          <ul class="text-sm text-slate-700 space-y-1 list-disc pl-5">
+            <li>Texto principal <code>#2C3E50</code> sobre <code>#F5FAFD</code> → contraste AA+.</li>
+            <li>Evitar <code>#92C8F0</code> y <code>#B9DCF5</code> como texto: usar solo como fondo.</li>
+            <li>Para semáforos, acompañar el color con icono (los daltónicos no distinguen <code>#0074BD</code> de <code>#C30000</code> con baja saturación).</li>
+            <li>Naranja <code>#E39828</code> es el único cálido del tema: úsalo con moderación para llamar la atención.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-8">Fuente: <span class="inline-code">tema_insight_hub_agrucapers.json</span> — tema activo en Power BI Desktop.</p>
+    </section>
+
+    <footer class="bg-slate-900 text-white text-center py-10 px-6">
+      <div class="flex items-center justify-center gap-6 mb-5 flex-wrap">
+        <div class="bg-white rounded-md px-3 py-2"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGlkPSJDYXBhXzIiIGRhdGEtbmFtZT0iQ2FwYSAyIiB2aWV3Qm94PSIwIDAgNDE3LjA0IDcwLjQ4Ij48ZGVmcz48c3R5bGU+ICAgICAgLmNscy0xIHsgICAgICAgIGZpbGw6ICMwMTVhNDE7ICAgICAgfSAgICAgIC5jbHMtMiB7ICAgICAgICBmaWxsOiAjMGNhNjRhOyAgICAgIH0gICAgPC9zdHlsZT48L2RlZnM+PGcgaWQ9IkNhcGFfMS0yIiBkYXRhLW5hbWU9IkNhcGEgMSI+PGc+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjUuODUsNTIuMzloMTAuOTR2OC4wNWMtMS4zLjk4LTIuODMsMS43Ny00LjYsMi4zNy0xLjc3LjU5LTMuNjcuODktNS43Ljg5LTIuMTksMC00LjE4LS4zOS01Ljk0LTEuMTYtMS43Ny0uNzgtMy4yOS0xLjg0LTQuNTctMy4xOS0xLjI4LTEuMzUtMi4yNy0yLjk2LTIuOTYtNC44NC0uNjktMS44OC0xLjA0LTMuOTItMS4wNC02LjEydi0uMTJjMC0yLjA0LjM2LTMuOTgsMS4wNy01LjgyLjcxLTEuODQsMS42OS0zLjQ0LDIuOTMtNC44MSwxLjI0LTEuMzcsMi43MS0yLjQ2LDQuNC0zLjI4LDEuNjktLjgyLDMuNTEtMS4yMyw1LjQ3LTEuMjMsMS4zNCwwLDIuNTguMTEsMy43LjM0LDEuMTIuMjMsMi4xNS41MywzLjA5LjkyLjk0LjM5LDEuODMuODcsMi42OSwxLjQ0Ljg2LjU3LDEuNjksMS4yLDIuNTEsMS44OWw0Ljc2LTUuNjhjLTEuMS0uOTQtMi4yMy0xLjc2LTMuMzktMi40Ny0xLjE2LS43MS0yLjM5LTEuMzItMy43LTEuOC0xLjMtLjQ5LTIuNzItLjg3LTQuMjUtMS4xMy0xLjUzLS4yNi0zLjIzLS40LTUuMS0uNC0zLjIyLDAtNi4xOC41OS04Ljg5LDEuNzctMi43MSwxLjE4LTUuMDUsMi43OC03LjAxLDQuOC0xLjk3LDIuMDItMy41LDQuMzctNC41OCw3LjA2LTEuMDksMi42OS0xLjYzLDUuNTItMS42Myw4LjQ5di4xMmMwLDMuMTQuNTMsNi4wNCwxLjU5LDguNzEsMS4wNiwyLjY3LDIuNTYsNC45OSw0LjQ5LDYuOTcsMS45MywxLjk4LDQuMjYsMy41Myw2Ljk5LDQuNjQsMi43MywxLjEyLDUuNzYsMS42OCw5LjEsMS42OCwxLjg3LDAsMy42Ny0uMTcsNS4zOC0uNTIsMS43MS0uMzUsMy4zMS0uODMsNC43OS0xLjQ0LDEuNDktLjYxLDIuODctMS4zMiw0LjE2LTIuMTQsMS4yOC0uODEsMi40NS0xLjY3LDMuNTEtMi41N3YtMTcuOTdoLTE4LjIxdjYuNTRaTTE2MS43OCw1MS41OWMwLDMuOTUtLjk2LDYuOTMtMi44OSw4LjkyLTEuOTMsMi00LjU3LDIuOTktNy45MywyLjk5cy02LjA2LTEuMDQtNy45OS0zLjEyYy0xLjkzLTIuMDgtMi44OS01LjExLTIuODktOS4xMXYtMjQuMzJoLTcuNDV2MjQuNjNjMCwzLjEuNDMsNS44MiwxLjI4LDguMTYuODUsMi4zNCwyLjA4LDQuMzEsMy42Nyw1LjksMS41OSwxLjU5LDMuNSwyLjc4LDUuNzQsMy41NywyLjI0LjgsNC43NCwxLjE5LDcuNTEsMS4xOXM1LjM1LS40LDcuNjEtMS4xOWMyLjI2LS43OSw0LjE5LTIsNS43Ny0zLjYsMS41OS0xLjYxLDIuODItMy42MiwzLjctNi4wMi44Ny0yLjQsMS4zMS01LjIsMS4zMS04LjM3di0yNC4yNmgtNy40NXYyNC42M1pNMTguODIsMjYuNjZMMCw2OS43NGg3LjdsNC40LTEwLjMzaDIwLjIybDQuMzQsMTAuMzNoNy45NEwyNS43OCwyNi42NmgtNi45NlpNMTQuODUsNTIuNzVsNy4zMy0xNy4xMSw3LjM5LDE3LjExaC0xNC43MlpNMTE5LjgzLDUxLjgxYzEuMjQtLjc1LDIuMzEtMS42NywzLjIxLTIuNzUuOS0xLjA4LDEuNi0yLjMyLDIuMTEtMy43My41MS0xLjQxLjc2LTIuOTguNzYtNC43NHYtLjEyYzAtMS44Ny0uMzEtMy41OS0uOTItNS4xMy0uNjEtMS41NS0xLjQ5LTIuOTEtMi42My00LjEtMS4zOS0xLjM0LTMuMTItMi4zOS01LjE5LTMuMTUtMi4wOC0uNzUtNC40Ni0xLjEzLTcuMTUtMS4xM2gtMTkuMDZ2NDIuNzhoNy40NXYtMTQuOTFoOS40NGwxMC41NCwxNC45MWg4Ljg2bC0xMS41NS0xNi4xOWMxLjUxLS40MSwyLjg4LS45OSw0LjEyLTEuNzRNOTguNDIsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNMjA0LjYxLDYyLjA4Yy0xLjg3LDEtNC4xMiwxLjUtNi43MiwxLjUtMi4wNCwwLTMuOTItLjQtNS42NS0xLjE5LTEuNzMtLjc5LTMuMjMtMS44OC00LjQ5LTMuMjctMS4yNi0xLjM4LTIuMjQtMy0yLjkzLTQuODYtLjY5LTEuODYtMS4wNC0zLjgyLTEuMDQtNS45di0uMTJjMC0yLjA4LjM1LTQuMDMsMS4wNC01Ljg3LjY5LTEuODMsMS42Ny0zLjQzLDIuOTMtNC44LDEuMjYtMS4zNiwyLjc2LTIuNDQsNC40OS0zLjI0LDEuNzMtLjc5LDMuNjItMS4xOSw1LjY1LTEuMTksMi40NCwwLDQuNjIuNDksNi41NCwxLjQ3LDEuOTEuOTgsMy43MywyLjI2LDUuNDQsMy44NWw0LjgzLTUuNTZjLTEuMDItLjk4LTIuMS0xLjg3LTMuMjQtMi42OS0xLjE0LS44MS0yLjM4LTEuNTItMy43My0yLjExLTEuMzQtLjU5LTIuODItMS4wNS00LjQzLTEuMzctMS42MS0uMzMtMy4zOS0uNDktNS4zNS0uNDktMy4yNiwwLTYuMjMuNTgtOC45MiwxLjc0LTIuNjksMS4xNi01LjAyLDIuNzUtNi45OCw0Ljc3cy0zLjUsNC4zNi00LjU4LDcuMDNjLTEuMDksMi42Ny0xLjYzLDUuNTMtMS42Myw4LjU5di4xMmMwLDMuMDYuNTUsNS45MywxLjY2LDguNjIsMS4xMSwyLjY5LDIuNjMsNS4wMiw0LjU4LDcsMS45NSwxLjk4LDQuMjQsMy41NCw2Ljg5LDQuNjcsMi42NSwxLjE0LDUuNTQsMS43MSw4LjY4LDEuNzEsMiwwLDMuODItLjE3LDUuNDctLjUyLDEuNjUtLjM1LDMuMTctLjg2LDQuNTUtMS41MywxLjM4LS42NywyLjY4LTEuNDcsMy44OC0yLjM4LDEuMi0uOTIsMi4zNS0xLjk3LDMuNDUtMy4xNWwtNC44My00Ljg5Yy0xLjgzLDEuNzEtMy42OSwzLjA3LTUuNTYsNC4wNk0zNzMuMzIsNTEuODFjMS4yNC0uNzUsMi4zMS0xLjY3LDMuMjEtMi43NS45LTEuMDgsMS42LTIuMzIsMi4xMS0zLjczLjUxLTEuNDEuNzYtMi45OC43Ni00Ljc0di0uMTJjMC0xLjg3LS4zMS0zLjU5LS45Mi01LjEzLS42MS0xLjU1LTEuNDktMi45MS0yLjYzLTQuMS0xLjM5LTEuMzQtMy4xMi0yLjM5LTUuMTktMy4xNS0yLjA4LS43NS00LjQ2LTEuMTMtNy4xNS0xLjEzaC0xOS4wNnY0Mi43OGg3LjQ2di0xNC45MWg5LjQ0bDEwLjU0LDE0LjkxaDguODZsLTExLjU1LTE2LjE5YzEuNTEtLjQxLDIuODgtLjk5LDQuMTItMS43NE0zNTEuOTEsNDguMTd2LTE0LjQyaDEwLjk3YzIuODIsMCw1LC42LDYuNTYsMS44MSwxLjU1LDEuMjEsMi4zMywyLjk4LDIuMzMsNS4zMXYuMTJjMCwyLjIxLS44LDMuOTYtMi4zOSw1LjI1LTEuNTksMS4yOS0zLjc0LDEuOTMtNi40MywxLjkzaC0xMS4wM1pNNDE2LjE1LDUyLjg1Yy0uNTktMS4zMi0xLjQ2LTIuNDktMi42LTMuNDgtMS4xNC0xLTIuNTgtMS44NC00LjMyLTIuNTQtMS43NC0uNjktMy43My0xLjMyLTUuOTctMS44OS0yLjA0LS40OS0zLjczLS45Ni01LjA1LTEuNC0xLjMzLS40NS0yLjM3LS45My0zLjEyLTEuNDQtLjc2LS41MS0xLjI4LTEuMDgtMS41Ni0xLjcxLS4yOS0uNjMtLjQzLTEuMzUtLjQzLTIuMTd2LS4xMmMwLTEuNDMuNjEtMi42MywxLjgzLTMuNjEsMS4yMi0uOTgsMi45My0xLjQ3LDUuMTMtMS40NywxLjk2LDAsMy44OS4zOCw1LjgxLDEuMTMsMS45MS43NSwzLjg1LDEuODQsNS44LDMuMjdsNC4wMy01LjY4Yy0yLjItMS43NS00LjU1LTMuMDktNy4wNi00LTIuNTEtLjkyLTUuMzMtMS4zNy04LjQ2LTEuMzctMi4xMiwwLTQuMDcuMy01Ljg2LjkyLTEuNzkuNjEtMy4zMiwxLjQ2LTQuNTksMi41NC0xLjI3LDEuMDgtMi4yNywyLjM4LTMsMy45MS0uNzMsMS41My0xLjA5LDMuMjEtMS4wOSw1LjA0di4xMmMwLDEuOTYuMzIsMy42My45NSw1LjAxLjYzLDEuMzksMS41NSwyLjU2LDIuNzYsMy41MSwxLjIxLjk2LDIuNywxLjc3LDQuNDcsMi40NSwxLjc4LjY3LDMuODEsMS4yNyw2LjA5LDEuOCwyLC40NSwzLjYyLjksNC44NywxLjM1LDEuMjQuNDUsMi4yMy45NCwyLjk0LDEuNDcuNzEuNTMsMS4yLDEuMDksMS40NywxLjY4LjI2LjU5LjQsMS4yNy40LDIuMDV2LjEyYzAsMS42My0uNjgsMi45My0yLjA1LDMuOTEtMS4zNy45OC0zLjIxLDEuNDctNS41MywxLjQ3LTIuNjksMC01LjA5LS40OC03LjIxLTEuNDQtMi4xMi0uOTYtNC4yMi0yLjMzLTYuMjktNC4xM2wtNC41Miw1LjM4YzIuNTcsMi4zMiw1LjM1LDQuMDQsOC4zNyw1LjE2LDMuMDEsMS4xMiw2LjE3LDEuNjgsOS40NywxLjY4LDIuMjQsMCw0LjMtLjI4LDYuMTctLjg2LDEuODctLjU3LDMuNDctMS40LDQuOC0yLjUsMS4zMy0xLjEsMi4zNy0yLjQ1LDMuMTItNC4wMy43NS0xLjU5LDEuMTItMy4zOCwxLjEyLTUuMzh2LS4xMmMwLTEuNzUtLjMtMy4yOS0uODktNC42MU0zMTIuODEsNTEuNTNoMjEuNDV2LTYuNzhoLTIxLjQ1di0xMWgyNC4xOXYtNi43OWgtMzEuNjV2NDIuNzhoMzEuOTZ2LTYuNzhoLTI0LjV2LTExLjQzWk0yMzYuMTMsMjYuNjZsLTE4LjgyLDQzLjA4aDcuN2w0LjQtMTAuMzNoMjAuMjJsNC4zNCwxMC4zM2g3Ljk0bC0xOC44Mi00My4wOGgtNi45NlpNMjMyLjE2LDUyLjc1bDcuMzMtMTcuMTEsNy4zOSwxNy4xMWgtMTQuNzJaTTI5NS4xMiwzMC44OGMtMS40MS0xLjI2LTMuMTItMi4yMy01LjEzLTIuOS0yLjAxLS42Ny00LjI3LTEuMDEtNi43NS0xLjAxaC0xNi44NnY0Mi43OGg3LjQ1di0xMy43NWg4LjUxYzIuMzcsMCw0LjU5LS4zMiw2LjY4LS45NSwyLjA4LS42MywzLjktMS41Niw1LjQ1LTIuNzgsMS41NS0xLjIyLDIuNzgtMi43NCwzLjY4LTQuNTUuOS0xLjgxLDEuMzUtMy45MiwxLjM1LTYuMzN2LS4xMmMwLTIuMTYtLjM4LTQuMTItMS4xMy01Ljg3LS43NS0xLjc1LTEuODMtMy4yNi0zLjI0LTQuNTJNMjkxLjg1LDQxLjU0YzAsMi4yNS0uODMsNC4wOS0yLjQ4LDUuNTItMS42NiwxLjQzLTMuOTEsMi4xNS02Ljc3LDIuMTVoLTguNzd2LTE1LjQ2aDguNzdjMi44MiwwLDUuMDcuNjQsNi43NCwxLjkzLDEuNjcsMS4yOSwyLjUxLDMuMiwyLjUxLDUuNzR2LjEyWiI+PC9wYXRoPjxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTE5Ni4zNCwwYy03Ljk1LDAtMTQuNzEsNS4wOC0xNy4yNCwxMi4xNi0zLjMzLTQuNTktOC43Mi03LjU4LTE0LjgyLTcuNTgsMCwxMC4xMSw4LjIsMTguMzIsMTguMzIsMTguMzIsMC0xLjczLS4yNi0zLjQxLS43MS01LDguMjUtMS43OCwxNC40NS05LjEyLDE0LjQ1LTE3LjkiPjwvcGF0aD48L2c+PC9nPjwvc3ZnPg==" alt="Agrucapers" class="h-7 w-auto" /></div>
+        <span class="opacity-40">×</span>
+        <div class="bg-white rounded-md px-3 py-2"><img src="data:image/svg+xml;base64,PHN2ZyBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA2MjQuNSAxODQiIHZpZXdCb3g9IjAgMCA2MjQuNSAxODQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZD0ibTAgMGg2MjQuNXYxODRoLTYyNC41eiIvPjwvY2xpcFBhdGg+PGcgZmlsbD0iIzA3MTUzZSI+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjYuOCA0Mi43Yy0zLjUtMy41LTcuNS02LjItMTItOC4xLTQuNy0yLTkuNi0zLTE0LjgtM3YyNC4xYzcuNiAwIDEzLjggNi4yIDEzLjggMTMuOHY4M2gyNC4xdi04M2MwLTUuMS0xLTEwLjEtMy0xNC44LTEuOS00LjQtNC42LTguNS04LjEtMTIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xMzUuOCA5OC41djU0LjFoLTI0LjF2LTQ2YzAtMTAuMi02LjQtMTYuOC0xNi4zLTE2LjgtMTAuMiAwLTE3LjMgNi44LTE3LjMgMTcuMXY0NS43aC0yNC4xdi04NC4xaDI0LjF2OC40YzYuNi02LjggMTUuMi0xMC40IDI1LjYtMTAuNCAxOS4yIDAgMzIuMSAxMi43IDMyLjEgMzIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im0xNTAuMSA5MXYtNi4zYzAtMTcuOCA5LjEtMzAuMyAyOS43LTMwLjMgNi4zIDAgMTEuMiAxLjIgMTYgMy42djIxLjNjLTMuMS0yLTYuNi0zLTEwLjYtMy03LjQgMC0xMSAzLjYtMTEgMTAuMXY0LjZoMTkuOXYyMS45aC0xOS45djM5LjZoLTI0LjF2LTM5LjZ6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMjA1IDExMC41YzAtMjUuMSAxOS41LTQ0IDQ1LjMtNDQgMjUuOSAwIDQ1LjMgMTkgNDUuMyA0NHMtMTkuNSA0NC00NS4zIDQ0LTQ1LjMtMTguOS00NS4zLTQ0bTY2IDBjMC0xMS45LTguNy0yMC44LTIwLjYtMjAuOHMtMjAuNiA4LjktMjAuNiAyMC44IDguNyAyMC44IDIwLjYgMjAuOGMxMS44IDAgMjAuNi04LjkgMjAuNi0yMC44Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtMzU3LjUgNjcuMXYyNC43aC0zLjZjLTE0LjcgMC0yMi44IDguNC0yMi44IDIxLjR2MzkuMmgtMjQuMXYtODMuOWgyNC4xdjkuNWM1LjktNi45IDEzLjctMTAuOSAyMi44LTEwLjl6Ii8+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNTQzLjkgMTE4LjRoLTYyLjZjMyA5LjQgMTEgMTUuMiAyMS42IDE1LjIgOS42IDAgMTcuMS00LjUgMjEuMS05LjRsMTYuMiAxNGMtOC45IDEwLjEtMjIuNCAxNi4zLTM3LjkgMTYuMy0yNi43IDAtNDYuOC0xOS4xLTQ2LjgtNDQuNSAwLTI0LjcgMTkuMy00My41IDQ0LjgtNDMuNSAyNS4yIDAgNDQuMiAxOC44IDQ0LjIgNDQuMy0uMSAyLjMtLjIgNS41LS42IDcuNm0tNjIuOC0xNmgzNy44Yy0yLjYtOS40LTkuOS0xNS4yLTE5LTE1LjJzLTE2LjMgNi0xOC44IDE1LjIiLz48cGF0aCBjbGlwLXBhdGg9InVybCgjYSkiIGQ9Im01NTEuOCAxNDEuOCAxMS4yLTE1LjVjNi40IDUuNCAxNC4zIDkuMSAyNC4xIDkuMSA3LjkgMCAxMy40LTIuMyAxMy40LTYuOCAwLTQuOC02LjQtNi40LTE1LTguNC0xMy40LTMtMzEtNi45LTMxLTI2LjcgMC0xOC4xIDE1LjgtMjcgMzUtMjcgMTQuOCAwIDI1LjYgNS4zIDMzLjUgMTFsLTExLjMgMTUuNWMtNi4zLTQuMy0xMy4yLTcuNC0yMS40LTcuNC02LjQgMC0xMS43IDEuOC0xMS43IDYuMSAwIDQuOCA2LjQgNi4zIDE1IDguMSAxMy4yIDIuOCAzMSA2LjkgMzEgMjYuNSAwIDE4LjUtMTYuMiAyOC4yLTM2LjYgMjguMi0xNiAwLTI3LjktNS45LTM2LjItMTIuNyIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNhKSIgZD0ibTQ1My41IDE3NS4yYy0zLjctMTQuOS0xNS40LTIzLjUtMzEuNy0yMy41aC0yNi4yYy00LjUgMC03LjYtMi41LTcuNi02LjMgMC0yLjUgMS4zLTQuOCAzLjgtNi40IDQgMS4yIDguMSAxLjYgMTIuNCAxLjYgMjIuOCAwIDM5LjktMTUuOCAzOS45LTM3LjEgMC04LjEtMi41LTE1LjItNi42LTIxLjEuOC0zLjEgNC01LjEgNy45LTUuMWg1Ljl2LTIyLjJoLTcuMWMtMTEuNSAwLTE5LjkgNS44LTIyLjQgMTQuOC01LjMtMi4xLTExLjItMy41LTE3LjYtMy41LTIyLjggMC0zOS43IDE1LjgtMzkuNyAzNy4xIDAgMTAuNCA0LjEgMTkuNiAxMSAyNi4yLTcuMSA0LjMtMTEuNSAxMi45LTExLjUgMjEuOCAwIDE0IDEwLjcgMjMuNCAyNyAyMy40aDI2LjJjNi44IDAgMTEuNCAzLjYgMTIgOS4xaDI1LjdzLS43LTYuMS0xLjQtOC44bS00OS40LTg2YzguNiAwIDE1LjIgNi4xIDE1LjIgMTQuM3MtNi42IDE0LjMtMTUuMiAxNC4zLTE1LTYuMS0xNS0xNC4zIDYuMy0xNC4zIDE1LTE0LjMiLz48L2c+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2EpIiBkPSJtNDMuNCAxNi4xYzAgOC45LTcuMiAxNi4xLTE2LjEgMTYuMXMtMTYuMS03LjItMTYuMS0xNi4xIDcuMy0xNi4xIDE2LjEtMTYuMSAxNi4xIDcuMiAxNi4xIDE2LjEiIGZpbGw9IiMwMDc0YmMiLz48L3N2Zz4=" alt="Inforges" class="h-6 w-auto" /></div>
+      </div>
+      <p class="text-sm opacity-80">Documentación generada a partir del modelo <strong>Estructura_AGRU_PRUEBA_v3</strong> (Power BI Desktop) y artefactos en <span class="inline-code" style="background:rgba(255,255,255,0.08); color:#fbbf24;">AGRUCAPERS</span>.</p>
+      <p class="text-xs opacity-60 mt-2">Actualizada con carga diaria · ETL SQL Server · 18/05/2026 · Desarrollado por Inforges</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Mermaid
+  mermaid.initialize({ startOnLoad: true, theme: 'default', themeVariables: { fontFamily: 'Inter, sans-serif', primaryColor: '#E6F3FB', primaryTextColor: '#004F84', primaryBorderColor: '#0074BD', lineColor: '#64748b' }, flowchart: { curve: 'basis', padding: 12 }});
+
+  // Progress bar
+  const fill = document.getElementById('progress-fill');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    fill.style.width = pct + '%';
+  });
+
+  // Sidebar nav active
+  const links = document.querySelectorAll('.nav-link');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  function updateActive(){
+    const y = window.scrollY + 100;
+    let current = sections[0].id;
+    for (const s of sections) { if (s.offsetTop <= y) current = s.id; }
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', updateActive);
+  updateActive();
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      const tabs = btn.closest('.tabs');
+      tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabs.querySelectorAll('.tab-content').forEach(c => { c.classList.add('hidden'); c.classList.remove('active'); });
+      btn.classList.add('active');
+      const content = tabs.querySelector(`.tab-content[data-tab="${tab}"]`);
+      content.classList.remove('hidden'); content.classList.add('active');
+    });
+  });
+
+  // Accordions
+  document.querySelectorAll('.accordion-header').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+  });
+
+  // Mobile sidebar
+  const sb = document.getElementById('sidebar');
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    sb.classList.toggle('hidden'); sb.classList.toggle('flex');
+  });
+  document.querySelectorAll('aside a').forEach(a => a.addEventListener('click', () => {
+    if (window.innerWidth < 1024) { sb.classList.add('hidden'); sb.classList.remove('flex'); }
+  }));
+</script>
+</body>
+</html>
